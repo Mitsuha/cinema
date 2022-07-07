@@ -1,28 +1,13 @@
-// import 'package:hourglass/model/user.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-//
-// class DB{
-//   User? user;
-//
-//   static DB ?_instance;
-//
-//   DB._internal({required this.user});
-//
-//   static static get instance async {
-//     if (_instance == null){
-//       var pre = await SharedPreferences.getInstance();
-//
-//     }
-//
-//     return _instance!;
-//   }
-// }
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DB {
-  static const String defaultAvatar = 'https://gw.alicdn.com/imgextra/i4/O1CN01Zqmj9x1yqaZster4k_!!6000000006630-2-tps-128-128.png';
+  static const String defaultAvatar =
+      'https://gw.alicdn.com/imgextra/i4/O1CN01Zqmj9x1yqaZster4k_!!6000000006630-2-tps-128-128.png';
+  static const originHeader = <String, String>{
+    'referer': 'https://www.aliyundrive.com/',
+    'origin': 'https://www.aliyundrive.com/'
+  };
 
   static SharedPreferences? _prefs;
 
