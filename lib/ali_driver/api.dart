@@ -1,4 +1,5 @@
 import 'package:hourglass/ali_driver/models/file.dart';
+import 'package:hourglass/ali_driver/models/video.dart';
 import 'package:hourglass/ali_driver/request.dart';
 import 'package:hourglass/model/db.dart';
 
@@ -27,20 +28,24 @@ class AliDriver {
     return files;
   }
 
-  static refreshToken() {
-    return _request.post('/token/refresh', data: {
-      "refresh_token": "7c9a6d7deea7453bb60d6f4e2435569c",
+  static refreshToken() async {
+    var response = await _request.post('/token/refresh', data: {
+      "refresh_token": DB.refreshToken,
     });
+
+    DB.accessToken = response.body['access_token'];
   }
 
-  static videoPlayInfo() {
-    return _request.post('/v2/file/get_video_preview_play_info', data: {
-      "drive_id": "8316645",
-      "file_id": "625d3e0af1ff1b5a7c1a4994a6f79db949d2a16a",
+  static Future<Video> videoPlayInfo(String fileID) async {
+    var response = await _request.post('/v2/file/get_video_preview_play_info', data: {
+      "drive_id": DB.rootDriver,
+      "file_id": fileID,
       "category": "live_transcoding",
       "template_id": "",
       "get_subtitle_info": true
     });
+
+    return Video.formJson(response.body['video_preview_play_info']);
   }
 
   static get() {

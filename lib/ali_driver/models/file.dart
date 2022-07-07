@@ -35,4 +35,7 @@ class AliFile {
                 ? 'https://img.alicdn.com/imgextra/i3/O1CN01qSxjg71RMTCxOfTdi_!!6000000002097-2-tps-80-80.png'
                 : 'https://img.alicdn.com/imgextra/i1/O1CN01mhaPJ21R0UC8s9oik_!!6000000002049-2-tps-80-80.png'),
       );
+
+  get isFolder => category == 'file';
+  get isVideo => category == 'video';
 }

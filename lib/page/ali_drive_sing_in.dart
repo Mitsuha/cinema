@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hourglass/model/db.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -22,6 +23,8 @@ class _AliDriveInitStackState extends State<AliDriverSignIn> {
   @override
   void initState() {
     super.initState();
+
+    if (Platform.isAndroid) WebView.platform = AndroidWebView();
 
     _timer = Timer(const Duration(seconds: 1), checkStatus);
   }
