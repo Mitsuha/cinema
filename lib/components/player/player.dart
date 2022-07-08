@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hourglass/components/player/bottom_bar.dart';
 import 'package:hourglass/components/player/controller.dart';
+import 'package:hourglass/components/player/state.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
@@ -10,8 +12,11 @@ class Player extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => controller,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<PlayerController>(create: (_) => controller),
+        ChangeNotifierProvider<PlayerState>(create: (_) => controller.state),
+      ],
       builder: (BuildContext context, _) {
         return DefaultTextStyle(
           style: const TextStyle(color: Colors.white),
@@ -22,16 +27,27 @@ class Player extends StatelessWidget {
                 children: [
                   AspectRatio(
                     aspectRatio: 16 / 9,
-                    child: Consumer<PlayerController>(builder: (BuildContext context, controller, _) {
-                      print('Consumer builder');
-
-                      if (controller.playerController == null) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else {
-                        return VideoPlayer(controller.playerController!);
-                      }
-                    }),
+                    child: Center(
+                      child: Consumer<PlayerController>(
+                        builder: (BuildContext context, controller, _) {
+                          print('Consumer builder');
+                          if (controller.playerController == null) {
+                            return const CircularProgressIndicator();
+                          } else {
+                            return AspectRatio(
+                              aspectRatio: controller.playerController!.value.aspectRatio,
+                              child: VideoPlayer(controller.playerController!),
+                            );
+                          }
+                        },
+                      ),
+                    ),
                   ),
+                  Positioned.fill(
+                      child: GestureDetector(
+                        onTap: () => print('tap'),
+                        onDoubleTap: controller.switchPlayStatus,
+                      )),
                   Positioned.fill(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -39,18 +55,7 @@ class Player extends StatelessWidget {
                         Row(
                           children: const [BackButton(color: Colors.white)],
                         ),
-                        Row(
-                          children: [
-                            Consumer<PlayerController>(builder: (BuildContext context, controller, _) {
-                              var isPlaying = controller.playerController!.value.isPlaying;
-
-                              return IconButton(
-                                icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow_rounded),
-                                onPressed: () {},
-                              );
-                            })
-                          ],
-                        )
+                        BottomBar(),
                       ],
                     ),
                   )

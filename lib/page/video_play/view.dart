@@ -22,12 +22,12 @@ class _VideoPlayPageState extends State<VideoPlayPage> {
   @override
   void initState() {
     super.initState();
+
+    playerController.setPlayList(widget.playlist);
   }
 
   @override
   Widget build(BuildContext context) {
-
-    playerController.setPlayList(widget.playlist);
     return Scaffold(
       body: Player(
         controller: playerController,
@@ -37,8 +37,8 @@ class _VideoPlayPageState extends State<VideoPlayPage> {
 
   @override
   void dispose() {
-    playerController.dispose();
-
     super.dispose();
+
+    playerController.dispose();
   }
 }

@@ -61,7 +61,7 @@ class Request {
     request.headers.set('referer', _referer);
     request.headers.set('origin', _referer);
     request.headers.set('user-agent', _userAgent);
-    request.headers.set('Authorization', 'Bearer ' + bearerToken);
+    request.headers.set('Authorization', 'Bearer $bearerToken');
   }
 }
 

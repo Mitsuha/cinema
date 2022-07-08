@@ -1,16 +1,15 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hourglass/components/player/state.dart';
 import 'package:video_player/video_player.dart';
 import '../../ali_driver/models/file.dart';
-import '../../ali_driver/models/play_info.dart';
 import '../../model/db.dart';
 
 class PlayerController with ChangeNotifier {
   final PlayerState state = PlayerState();
 
-  final Completer<VideoPlayerController> playerControllerCompleter = Completer();
   VideoPlayerController? playerController;
+
+  final ValueNotifier sliderValueNotifier = ValueNotifier(0.0);
 
   PlayerController();
 
@@ -22,7 +21,12 @@ class PlayerController with ChangeNotifier {
       await video.loadPlayInfo();
     }
 
-    playerController = VideoPlayerController.network(video.playInfo!.sources.last.url, httpHeaders: DB.originHeader);
+    playerController = VideoPlayerController.network(video.playInfo!.sources.last.url,
+        httpHeaders: DB.originHeader);
+
+    playerController!.addListener(() {
+      state.setPlayingDuration(playerController!.value.position);
+    });
 
     await playerController!.initialize();
 
@@ -35,9 +39,31 @@ class PlayerController with ChangeNotifier {
     _loadNewVideo(state.playlist.first);
   }
 
+  switchPlayStatus() {
+    if (playerController == null) {
+      return;
+    }
+
+    playerController!.value.isPlaying ? playerController!.pause() : playerController!.play();
+
+    state.setPlayStatus(playerController!.value.isPlaying);
+  }
+
+  seekTo(int seconds) {
+    if (playerController == null) {
+      return;
+    }
+
+    playerController!.seekTo(Duration(seconds: seconds));
+
+    state.setPlayingSeconds(seconds);
+  }
+
   @override
   void dispose() {
-    playerController?.dispose();
     super.dispose();
+
+    playerController?.dispose();
+    sliderValueNotifier.dispose();
   }
 }

@@ -6,8 +6,6 @@ import 'package:hourglass/model/db.dart';
 class AliDriver {
   static final Request _request = Request(bearerToken: DB.accessToken);
 
-  static const String _driveId = '8316645';
-
   static Future<List<AliFile>> fileList({String parentFileID = 'root'}) async {
     var response = await _request.post('https://api.aliyundrive.com/adrive/v3/file/list', data: {
       'all': false,
