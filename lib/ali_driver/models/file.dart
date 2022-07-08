@@ -1,3 +1,7 @@
+import 'package:hourglass/ali_driver/models/play_info.dart';
+
+import '../api.dart';
+
 class AliFile {
   final String driveID;
   final String fileID;
@@ -8,6 +12,7 @@ class AliFile {
   final String createdAt;
   final String category;
   final String thumbnail;
+  PlayInfo? playInfo;
 
   AliFile({
     required this.driveID,
@@ -38,4 +43,11 @@ class AliFile {
 
   get isFolder => category == 'file';
   get isVideo => category == 'video';
+  get playInfoLoaded => playInfo != null;
+
+  Future<AliFile> loadPlayInfo() async {
+    playInfo = await AliDriver.videoPlayInfo(fileID);
+
+    return this;
+  }
 }

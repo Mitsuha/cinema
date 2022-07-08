@@ -1,5 +1,5 @@
 import 'package:hourglass/ali_driver/models/file.dart';
-import 'package:hourglass/ali_driver/models/video.dart';
+import 'package:hourglass/ali_driver/models/play_info.dart';
 import 'package:hourglass/ali_driver/request.dart';
 import 'package:hourglass/model/db.dart';
 
@@ -36,7 +36,7 @@ class AliDriver {
     DB.accessToken = response.body['access_token'];
   }
 
-  static Future<Video> videoPlayInfo(String fileID) async {
+  static Future<PlayInfo> videoPlayInfo(String fileID) async {
     var response = await _request.post('/v2/file/get_video_preview_play_info', data: {
       "drive_id": DB.rootDriver,
       "file_id": fileID,
@@ -45,7 +45,7 @@ class AliDriver {
       "get_subtitle_info": true
     });
 
-    return Video.formJson(response.body['video_preview_play_info']);
+    return PlayInfo.formJson(response.body['video_preview_play_info']);
   }
 
   static get() {

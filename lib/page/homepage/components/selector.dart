@@ -77,7 +77,6 @@ class VideoSelector extends StatelessWidget {
                   child: StreamBuilder(
                     stream: controller.fileListChangeNotifier.stream,
                     builder: (BuildContext context, snapshot) {
-                      print('build');
                       return ListView.builder(
                         padding: EdgeInsets.zero,
                         itemCount: controller.files.length,
