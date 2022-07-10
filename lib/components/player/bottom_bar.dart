@@ -50,7 +50,7 @@ class BottomBar extends StatelessWidget {
                 return SliderTheme(
                   data: SliderTheme.of(context).copyWith(
                     activeTrackColor: Colors.white,
-                    inactiveTrackColor: const Color(0x40FFFFFF),
+                    inactiveTrackColor: const Color(0x30FFFFFF),
                     trackShape: const RectangularSliderTrackShape(),
                     thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
                     overlayColor: const Color(0x60FFFFFF),

@@ -3,10 +3,13 @@ import 'package:hourglass/model/db.dart';
 import 'package:hourglass/page/ali_drive_sing_in.dart';
 import 'package:hourglass/page/homepage/homepage.dart';
 import 'package:hourglass/page/welcome_page.dart';
+import 'package:provider/provider.dart';
 
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  /// todo: https://github.com/rrousselGit/provider/issues/356
+  Provider.debugCheckInvalidValueType = null;
 
   DB.init();
 

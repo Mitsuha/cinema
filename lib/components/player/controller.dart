@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:hourglass/components/player/state.dart';
 import 'package:video_player/video_player.dart';
@@ -16,6 +18,7 @@ class PlayerController with ChangeNotifier {
   _loadNewVideo(AliFile video) async {
     playerController?.dispose();
     playerController = null;
+    state.setVideoControllerInitialing(true);
 
     if (!video.playInfoLoaded) {
       await video.loadPlayInfo();
@@ -30,7 +33,9 @@ class PlayerController with ChangeNotifier {
 
     await playerController!.initialize();
 
-    notifyListeners();
+    state.setVideoControllerInitialing(false);
+
+    switchPlayStatus();
   }
 
   setPlayList(List<AliFile> playlist) {
@@ -49,6 +54,17 @@ class PlayerController with ChangeNotifier {
     state.setPlayStatus(playerController!.value.isPlaying);
   }
 
+  switchRibbon() {
+    if (state.ribbonShow == false) {
+      state.ribbonVisibility = true;
+    }
+    state.setRibbonShow(!state.ribbonShow);
+  }
+
+  updateRibbonVisibility() {
+    state.setRibbonVisibility(state.ribbonShow);
+  }
+
   seekTo(int seconds) {
     if (playerController == null) {
       return;
@@ -57,6 +73,46 @@ class PlayerController with ChangeNotifier {
     playerController!.seekTo(Duration(seconds: seconds));
 
     state.setPlayingSeconds(seconds);
+  }
+
+  addFastForwardTo(DragUpdateDetails details) {
+    if (playerController == null) {
+      return;
+    }
+    int second = state.fastForwardTo == Duration.zero
+        ? playerController!.value.position.inSeconds
+        : state.fastForwardTo.inSeconds;
+
+    state.setFastForwardTo(Duration(seconds: second + (details.delta.dx * 3).toInt()));
+  }
+
+  doFastForward(DragEndDetails _) {
+    playerController?.seekTo(state.fastForwardTo);
+    state.setFastForwardTo(Duration.zero);
+  }
+
+  addBright(DragUpdateDetails details) {
+    print('addBright');
+  }
+
+  addVolume(DragUpdateDetails details) {
+    if (playerController == null) {
+      return;
+    }
+    var volume = playerController!.value.volume;
+
+    volume -= (details.delta.dy / 100);
+
+    playerController!.setVolume(max(min(volume, 1.0), 0));
+    state.setVolumeUpdating(true);
+  }
+
+  addBrightOrVolumeDone(DragEndDetails _){
+    if(state.volumeUpdating){
+      state.setVolumeUpdating(false);
+    }else if(state.brightUpdating){
+      state.setBrightUpdating(false);
+    }
   }
 
   @override
