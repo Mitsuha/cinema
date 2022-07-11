@@ -39,6 +39,8 @@ dependencies:
   video_player: ^2.4.5
   fluttertoast: ^8.0.9
   provider: ^6.0.3
+  screen_brightness: 0.2.1
+  volume_controller: ^2.0.3
 
 
 

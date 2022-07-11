@@ -1,19 +1,38 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hourglass/components/player/state.dart';
+import 'package:screen_brightness/screen_brightness.dart';
 import 'package:video_player/video_player.dart';
+import 'package:volume_controller/volume_controller.dart';
 import '../../ali_driver/models/file.dart';
 import '../../model/db.dart';
 
 class PlayerController with ChangeNotifier {
   final PlayerState state = PlayerState();
+  final VideoPlayState videoPlayState = VideoPlayState();
+
+  final VolumeController volumeController = VolumeController()..showSystemUI = false;
+  final ScreenBrightness screenBrightness = ScreenBrightness();
 
   VideoPlayerController? playerController;
 
   final ValueNotifier sliderValueNotifier = ValueNotifier(0.0);
 
   PlayerController();
+
+  init() {
+    volumeController.listener((v) {
+      if (!state.volumeUpdating) {
+        return state.setVolumeValue(v);
+      }
+    });
+    screenBrightness.onCurrentBrightnessChanged.listen((v) {
+      if (!state.volumeUpdating) {
+        state.setBrightValue(v);
+      }
+    });
+  }
 
   _loadNewVideo(AliFile video) async {
     playerController?.dispose();
@@ -28,7 +47,7 @@ class PlayerController with ChangeNotifier {
         httpHeaders: DB.originHeader);
 
     playerController!.addListener(() {
-      state.setPlayingDuration(playerController!.value.position);
+      videoPlayState.setPlayingDuration(playerController!.value.position);
     });
 
     await playerController!.initialize();
@@ -71,8 +90,6 @@ class PlayerController with ChangeNotifier {
     }
 
     playerController!.seekTo(Duration(seconds: seconds));
-
-    state.setPlayingSeconds(seconds);
   }
 
   addFastForwardTo(DragUpdateDetails details) {
@@ -92,27 +109,51 @@ class PlayerController with ChangeNotifier {
   }
 
   addBright(DragUpdateDetails details) {
-    print('addBright');
-  }
+    var bright = state.brightValue;
 
-  addVolume(DragUpdateDetails details) {
-    if (playerController == null) {
+    if (details.delta.dy == 0) {
       return;
     }
-    var volume = playerController!.value.volume;
+    if (!state.brightUpdating) {
+      state.setBrightUpdating(true);
+    }
 
-    volume -= (details.delta.dy / 100);
+    bright -= (details.delta.dy / 100);
+    bright = max(min(bright, 1.0), 0);
 
-    playerController!.setVolume(max(min(volume, 1.0), 0));
-    state.setVolumeUpdating(true);
+    screenBrightness.setScreenBrightness(bright);
+    state.setBrightValue(bright);
   }
 
-  addBrightOrVolumeDone(DragEndDetails _){
-    if(state.volumeUpdating){
+  addVolume(DragUpdateDetails details) async {
+    var volume = state.volumeValue;
+
+    if (details.delta.dy == 0) {
+      return;
+    }
+    if (!state.volumeUpdating) {
+      state.setVolumeUpdating(true);
+    }
+
+    volume -= (details.delta.dy / 100);
+    volume = max(min(volume, 1.0), 0);
+
+    volumeController.setVolume(volume);
+    state.setVolumeValue(volume);
+  }
+
+  addBrightOrVolumeDone(DragEndDetails _) {
+    if (state.volumeUpdating) {
       state.setVolumeUpdating(false);
-    }else if(state.brightUpdating){
+    } else if (state.brightUpdating) {
       state.setBrightUpdating(false);
     }
+  }
+
+  fullScreen(){
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft, //全屏时旋转方向，左边
+    ]);
   }
 
   @override
@@ -121,5 +162,6 @@ class PlayerController with ChangeNotifier {
 
     playerController?.dispose();
     sliderValueNotifier.dispose();
+    volumeController.removeListener();
   }
 }

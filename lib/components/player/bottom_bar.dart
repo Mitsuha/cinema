@@ -16,12 +16,10 @@ class BottomBar extends StatelessWidget {
     var controller = context.read<PlayerController>();
     var state = context.watch<PlayerState>();
 
-    if(! dragging){
+    if (!dragging) {
       controller.sliderValueNotifier.value =
           controller.playerController?.value.position.inSeconds.toDouble() ?? 0.0;
     }
-
-    var isPlaying = controller.playerController?.value.isPlaying ?? false;
 
     return DecoratedBox(
       decoration: const BoxDecoration(
@@ -37,55 +35,59 @@ class BottomBar extends StatelessWidget {
             width: iconButtonSize,
             child: IconButton(
               icon: Icon(
-                isPlaying ? Icons.pause : Icons.play_arrow_rounded,
+                state.playing ? Icons.pause : Icons.play_arrow_rounded,
                 color: Colors.white,
               ),
               onPressed: controller.switchPlayStatus,
             ),
           ),
-          Expanded(
-            child: ValueListenableBuilder(
-              valueListenable: controller.sliderValueNotifier,
-              builder: (BuildContext context, v, _) {
-                return SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: Colors.white,
-                    inactiveTrackColor: const Color(0x30FFFFFF),
-                    trackShape: const RectangularSliderTrackShape(),
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
-                    overlayColor: const Color(0x60FFFFFF),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
-                    thumbColor: Colors.white,
-                  ),
-                  child: Slider(
-                    min: 0,
-                    max: controller.playerController?.value.duration.inSeconds.toDouble() ?? 100,
-                    value: (v as double),
-                    onChanged: (newValue) {
-                      controller.sliderValueNotifier.value = newValue;
+          Consumer<VideoPlayState>(builder: (context, state, _) {
+            return Expanded(
+              child: Row(children: [
+                Expanded(
+                  child: ValueListenableBuilder(
+                    valueListenable: controller.sliderValueNotifier,
+                    builder: (BuildContext context, v, _) {
+                      return SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: Colors.white,
+                          inactiveTrackColor: const Color(0x30FFFFFF),
+                          trackShape: const RectangularSliderTrackShape(),
+                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+                          overlayColor: const Color(0x60FFFFFF),
+                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
+                          thumbColor: Colors.white,
+                        ),
+                        child: Slider(
+                          min: 0,
+                          max: controller.playerController?.value.duration.inSeconds.toDouble() ??
+                              100,
+                          value: (v as double),
+                          onChanged: (newValue) {
+                            controller.sliderValueNotifier.value = newValue;
+                          },
+                          onChangeStart: (_) => dragging = true,
+                          onChangeEnd: (newValue) {
+                            dragging = false;
+                            controller.seekTo(newValue.toInt());
+                          },
+                        ),
+                      );
                     },
-                    onChangeStart: (_) => dragging = true,
-                    onChangeEnd: (newValue) {
-                      dragging = false;
-                      controller.seekTo(newValue.toInt());
-                    },
                   ),
-                );
-              },
-            ),
-          ),
-          Text(
-            "${controller.playerController?.value.duration.toVideoString() ?? '00:00'}/${state.playingDuration.toVideoString()}",
-            style: const TextStyle(fontSize: 12),
-          ),
+                ),
+                Text(
+                  "${controller.playerController?.value.duration.toVideoString() ?? '00:00'}/${state.playingDuration.toVideoString()}",
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ]),
+            );
+          }),
           SizedBox(
             width: iconButtonSize,
             child: IconButton(
-              icon: Icon(
-                Icons.fullscreen,
-                color: Colors.white,
-              ),
-              onPressed: controller.switchPlayStatus,
+              icon: const Icon(Icons.fullscreen, color: Colors.white),
+              onPressed: controller.fullScreen,
             ),
           ),
         ],

@@ -34,11 +34,4 @@ class _VideoPlayPageState extends State<VideoPlayPage> {
       )
     );
   }
-
-  @override
-  void dispose() {
-    super.dispose();
-
-    playerController.dispose();
-  }
 }

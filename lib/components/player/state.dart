@@ -6,26 +6,21 @@ class PlayerState with ChangeNotifier{
   AliFile? currentPlayAliFile;
 
   var playing = false;
-  int playingSeconds = 0;
-  Duration playingDuration = const Duration();
   var ribbonShow = true;
   var ribbonVisibility = true;
   var videoControllerInitialing = true;
   var videoCaching = false;
   var fastForwardTo = Duration.zero;
-  var volumeUpdating = true;
-  var brightUpdating = true;
+  var volumeUpdating = false;
+  var volumeValue = .0;
+  var brightUpdating = false;
+  var brightValue = .0;
 
   setVideoControllerInitialing(bool initialing){
     if(initialing == videoControllerInitialing){
       return;
     }
     videoControllerInitialing = initialing;
-    notifyListeners();
-  }
-
-  setFastForwardTo(Duration forward){
-    fastForwardTo = forward;
     notifyListeners();
   }
 
@@ -37,13 +32,9 @@ class PlayerState with ChangeNotifier{
     notifyListeners();
   }
 
-  setPlayingSeconds(int seconds){
-    playingSeconds = seconds;
-    notifyListeners();
-  }
 
-  setPlayingDuration(Duration duration){
-    playingDuration = duration;
+  setFastForwardTo(Duration forward){
+    fastForwardTo = forward;
     notifyListeners();
   }
 
@@ -65,8 +56,34 @@ class PlayerState with ChangeNotifier{
     notifyListeners();
   }
 
+  setVolumeValue(double v){
+    volumeValue = v;
+    notifyListeners();
+  }
+
   setBrightUpdating(bool update){
     brightUpdating = update;
+    notifyListeners();
+  }
+
+  setBrightValue(double v){
+    brightValue = v;
+    notifyListeners();
+  }
+
+}
+
+class VideoPlayState with ChangeNotifier{
+  int playingSeconds = 0;
+  Duration playingDuration = const Duration();
+
+  setPlayingSeconds(int seconds){
+    playingSeconds = seconds;
+    notifyListeners();
+  }
+
+  setPlayingDuration(Duration duration){
+    playingDuration = duration;
     notifyListeners();
   }
 

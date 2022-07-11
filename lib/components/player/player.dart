@@ -6,17 +6,39 @@ import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:hourglass/helpers.dart';
 
-class Player extends StatelessWidget {
+class Player extends StatefulWidget {
   final PlayerController controller;
 
   const Player({required this.controller, Key? key}) : super(key: key);
 
   @override
+  State<Player> createState() => _PlayerState();
+}
+
+class _PlayerState extends State<Player> {
+  @override
+  void initState() {
+    super.initState();
+
+    widget.controller.init();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    print('dispose');
+    widget.controller.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    print('video player build');
     return MultiProvider(
       providers: [
-        Provider<PlayerController>(create: (_) => controller),
-        ChangeNotifierProvider<PlayerState>(create: (_) => controller.state),
+        Provider<PlayerController>(create: (_) => widget.controller),
+        ChangeNotifierProvider<PlayerState>(create: (_) => widget.controller.state),
+        ChangeNotifierProvider<VideoPlayState>(create: (_) => widget.controller.videoPlayState),
       ],
       builder: (BuildContext context, _) {
         PlayerController controller = context.read<PlayerController>();
@@ -50,12 +72,29 @@ class Player extends StatelessWidget {
                       if (state.fastForwardTo != Duration.zero) {
                         return notifierWarp(child: Text(state.fastForwardTo.toVideoString()));
                       }
-                      if (state.volumeUpdating) {
-                        return notifierWarp(
-                          child: LinearProgressIndicator(
-                            value: controller.playerController?.value.volume,
-                            color: Colors.white,
-                            backgroundColor: const Color(0x30FFFFFF),
+                      if (state.brightUpdating || state.volumeUpdating) {
+                        return SizedBox(
+                          width: 160,
+                          child: notifierWarp(
+                            child: Row(
+                              children: [
+                                Icon(
+                                  state.brightUpdating ? Icons.wb_sunny_outlined : Icons.volume_up,
+                                  color: Colors.white,
+                                  size: 19,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: LinearProgressIndicator(
+                                    value: state.brightUpdating
+                                        ? state.brightValue
+                                        : state.volumeValue,
+                                    color: Colors.white,
+                                    backgroundColor: const Color(0x30FFFFFF),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }
