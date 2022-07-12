@@ -22,12 +22,14 @@ class _VideoPlayPageState extends State<VideoPlayPage> {
   @override
   void initState() {
     super.initState();
-
+    print('video play view init');
     playerController.setPlayList(widget.playlist);
   }
 
   @override
   Widget build(BuildContext context) {
+    print('video play view build');
+
     return Scaffold(
       body: Player(
         controller: playerController,

@@ -6,18 +6,17 @@ import 'package:screen_brightness/screen_brightness.dart';
 import 'package:video_player/video_player.dart';
 import 'package:volume_controller/volume_controller.dart';
 import '../../ali_driver/models/file.dart';
+import '../../ali_driver/models/play_info.dart';
 import '../../model/db.dart';
 
 class PlayerController with ChangeNotifier {
   final PlayerState state = PlayerState();
   final VideoPlayState videoPlayState = VideoPlayState();
-
   final VolumeController volumeController = VolumeController()..showSystemUI = false;
   final ScreenBrightness screenBrightness = ScreenBrightness();
+  final ValueNotifier sliderValueNotifier = ValueNotifier(0.0);
 
   VideoPlayerController? playerController;
-
-  final ValueNotifier sliderValueNotifier = ValueNotifier(0.0);
 
   PlayerController();
 
@@ -34,17 +33,25 @@ class PlayerController with ChangeNotifier {
     });
   }
 
-  _loadNewVideo(AliFile video) async {
+  selectEpisode(int i) async {
+    AliFile episode = state.playlist[i];
+
+    if (!episode.playInfoLoaded) {
+      await episode.loadPlayInfo();
+    }
+    state.setCurrentEpisode(episode);
+
+    _loadNewVideo(episode.playInfo!.useTheBast());
+
+    switchPlayStatus();
+  }
+
+  _loadNewVideo(Source source) async {
     playerController?.dispose();
     playerController = null;
     state.setVideoControllerInitialing(true);
 
-    if (!video.playInfoLoaded) {
-      await video.loadPlayInfo();
-    }
-
-    playerController = VideoPlayerController.network(video.playInfo!.sources.last.url,
-        httpHeaders: DB.originHeader);
+    playerController = VideoPlayerController.network(source.url, httpHeaders: DB.originHeader);
 
     playerController!.addListener(() {
       videoPlayState.setPlayingDuration(playerController!.value.position);
@@ -53,14 +60,12 @@ class PlayerController with ChangeNotifier {
     await playerController!.initialize();
 
     state.setVideoControllerInitialing(false);
-
-    switchPlayStatus();
   }
 
   setPlayList(List<AliFile> playlist) {
     state.playlist = playlist;
 
-    _loadNewVideo(state.playlist.first);
+    selectEpisode(0);
   }
 
   switchPlayStatus() {
@@ -150,10 +155,25 @@ class PlayerController with ChangeNotifier {
     }
   }
 
+  onDetectorDone(){
+    state.volumeUpdating = false;
+    state.brightUpdating = false;
+    state.fastForwardTo = Duration.zero;
+    state.notifyListeners();
+  }
+
   fullScreen(){
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft, //全屏时旋转方向，左边
     ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
+
+  cancelFullScreen(){
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp, //全屏时旋转方向，左边
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
   @override

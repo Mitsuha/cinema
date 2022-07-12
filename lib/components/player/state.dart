@@ -1,10 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:hourglass/ali_driver/models/file.dart';
+import 'package:flutter/material.dart';
 
 class PlayerState with ChangeNotifier{
   var playlist = <AliFile>[];
-  AliFile? currentPlayAliFile;
-
   var playing = false;
   var ribbonShow = true;
   var ribbonVisibility = true;
@@ -15,12 +14,19 @@ class PlayerState with ChangeNotifier{
   var volumeValue = .0;
   var brightUpdating = false;
   var brightValue = .0;
+  var orientation = Orientation.portrait;
+  AliFile? currentEpisode;
 
   setVideoControllerInitialing(bool initialing){
     if(initialing == videoControllerInitialing){
       return;
     }
     videoControllerInitialing = initialing;
+    notifyListeners();
+  }
+
+  setCurrentEpisode(AliFile file){
+    currentEpisode = file;
     notifyListeners();
   }
 
@@ -68,6 +74,14 @@ class PlayerState with ChangeNotifier{
 
   setBrightValue(double v){
     brightValue = v;
+    notifyListeners();
+  }
+
+  setOrientation(Orientation o){
+    if(orientation == o){
+      return;
+    }
+    orientation = o;
     notifyListeners();
   }
 

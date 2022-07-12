@@ -22,7 +22,7 @@ class PlayController {
   loadVideo(AliFile file){
     currentFile = file;
 
-    playerController.setPlayList(playlist);
+    // playerController.setPlayList(playlist);
   }
 
 }
