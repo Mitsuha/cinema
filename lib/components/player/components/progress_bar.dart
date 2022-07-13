@@ -21,9 +21,9 @@ class VideoProgressBar extends StatelessWidget {
         return SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: Colors.white,
-            inactiveTrackColor: const Color(0x30FFFFFF),
+            inactiveTrackColor: const Color(0x50FFFFFF),
             trackShape: const RectangularSliderTrackShape(),
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
             overlayColor: const Color(0x60FFFFFF),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
             thumbColor: Colors.white,

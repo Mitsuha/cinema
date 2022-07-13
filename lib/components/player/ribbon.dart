@@ -13,7 +13,6 @@ class PlayerRibbon extends StatelessWidget {
   Widget build(BuildContext context) {
     PlayerController controller = context.read<PlayerController>();
     var state = context.watch<PlayerState>();
-    print('Ribbon build: ${state.orientation}');
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -48,6 +47,30 @@ class PlayerRibbon extends StatelessWidget {
           ),
         ),
         Visibility(
+          visible: state.orientation == Orientation.landscape && state.ribbonShow,
+          child: Row(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Transform.translate(
+                    offset: const Offset(34, 0),
+                    child: IconButton(
+                      iconSize: 60,
+                      icon: Icon(
+                        state.playing ? Icons.pause : Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        shadows: const [Shadow(color: Colors.white, blurRadius: 50)],
+                      ),
+                      onPressed: controller.switchPlayStatus,
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(onPressed: (){}, icon: const Icon(Icons.keyboard_voice, color: Colors.white))
+            ],
+          ),
+        ),
+        Visibility(
           visible: state.ribbonVisibility,
           maintainAnimation: true,
           maintainState: true,
@@ -55,7 +78,7 @@ class PlayerRibbon extends StatelessWidget {
             opacity: state.ribbonShow ? 1 : 0,
             duration: const Duration(milliseconds: 300),
             onEnd: controller.updateRibbonVisibility,
-            child: state.orientation == Orientation.portrait ? const SimpleBottomBar(): FullBottomBar(),
+            child: state.orientation == Orientation.portrait ? const SimpleBottomBar() : FullBottomBar(),
           ),
         ),
       ],

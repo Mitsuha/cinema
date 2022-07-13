@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hourglass/components/player/components/menu.dart';
 import 'package:hourglass/components/player/components/simple_bottom_bar.dart';
 import 'package:hourglass/components/player/controller.dart';
 import 'package:hourglass/components/player/components/detector.dart';
@@ -47,9 +48,9 @@ class _PlayerState extends State<Player> {
             color: Colors.black,
             child: OrientationBuilder(builder: (BuildContext context, Orientation orientation) {
               context.read<PlayerState>().orientation = orientation;
-              print('OrientationBuilder: $orientation');
 
               Widget stack = Stack(
+                fit: StackFit.loose,
                 children: [
                   VideoContainer(),
                   const Positioned.fill(
@@ -60,11 +61,16 @@ class _PlayerState extends State<Player> {
                   ),
                   Positioned.fill(
                     child: PlayerRibbon(),
-                  )
+                  ),
+                  if (orientation == Orientation.landscape)
+                    const Positioned(
+                      right: 0,
+                      child: PlayerMenu(),
+                    )
                 ],
               );
 
-              if(orientation == Orientation.landscape) {
+              if (orientation == Orientation.landscape) {
                 return stack;
               }
 
