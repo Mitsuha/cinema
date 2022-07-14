@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:hourglass/ali_driver/models/file.dart';
 import 'package:flutter/material.dart';
 
@@ -37,6 +38,7 @@ class PlayerState with ChangeNotifier{
   var brightUpdating = false;
   var brightValue = .0;
   var orientation = Orientation.portrait;
+  var deviceOrientation = DeviceOrientation.portraitUp;
   var videoMenu = VideoMenu.none;
 
   AliFile? currentEpisode;

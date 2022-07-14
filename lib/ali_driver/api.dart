@@ -20,7 +20,7 @@ class AliDriver {
     });
     var files = <AliFile>[];
 
-    for(var f in response.body['items']){
+    for (var f in response.body['items']) {
       files.add(AliFile.formJson(f));
     }
     return files;
@@ -41,10 +41,18 @@ class AliDriver {
       "file_id": fileID,
       "category": "live_transcoding",
       "template_id": "",
-      "get_subtitle_info": true
+      "get_subtitle_info": true,
+      "url_expire_sec": 14400
     });
 
     return PlayInfo.formJson(response.body['video_preview_play_info']);
+  }
+
+  static downloadUrl(String fileID) {
+    return _request.post('/v2/file/get_download_url', data: {
+      "drive_id": AliPersistence.instance.rootDriver,
+      "file_id": fileID
+    });
   }
 
   static get() {
@@ -58,9 +66,10 @@ class AliDriver {
   }
 
   static Future<Response> userProfile() {
-     return _request.post('/adrive/v2/user/get',data: {});
+    return _request.post('/adrive/v2/user/get', data: {});
   }
+
   static Future<Response> userDriverInfo() {
-     return _request.post('/v2/databox/get_personal_info',data: {});
+    return _request.post('/v2/databox/get_personal_info', data: {});
   }
 }

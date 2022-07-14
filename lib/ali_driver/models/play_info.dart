@@ -37,10 +37,11 @@ class Source {
   Source({required this.url, required this.resolution});
 
   get resolutionSort => {
+        "LD": "低画质",
         "SD": "流畅",
         "HD": "标清",
         "FHD": "高清",
-      }[resolution];
+      }[resolution] ?? '原画';
 
   get resolutionFullName {
     return {
@@ -48,6 +49,6 @@ class Source {
         "SD": "540P 流畅",
         "HD": "720P 标清",
         "FHD": "1080P 高清",
-      }[resolution];
+      }[resolution] ?? resolution;
   }
 }
