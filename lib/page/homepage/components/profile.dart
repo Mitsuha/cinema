@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:hourglass/page/homepage/state.dart';
+import 'package:provider/provider.dart';
 
-import '../../../model/db.dart';
-
-class Header extends StatelessWidget {
-  const Header({Key? key}) : super(key: key);
+class UserProfile extends StatelessWidget {
+  const UserProfile({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final HomepageState state = context.watch<HomepageState>();
+
     return Card(
       color: Colors.white,
       child: Padding(
@@ -18,11 +20,10 @@ class Header extends StatelessWidget {
               CircleAvatar(
                 radius: 30,
                 backgroundColor: Colors.white,
-                backgroundImage: NetworkImage(
-                    DB.avatar != '' ? DB.avatar : DB.defaultAvatar),
+                backgroundImage: NetworkImage(state.user.avatar),
               ),
               const SizedBox(height: 5),
-              Text(DB.name, style: const TextStyle(fontSize: 15)),
+              Text(state.user.name, style: const TextStyle(fontSize: 15)),
               const SizedBox(height: 10),
               SizedBox(
                 width: 180,
@@ -30,16 +31,17 @@ class Header extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('668.11 GB / 90.11 GB',
-                          style: TextStyle(
-                              fontSize: 11, color: Colors.grey)),
-                      const SizedBox(height: 3),
+                      Text(
+                        '${state.user.usedSizeFormat} GB / ${state.user.totalSizeFormat} GB',
+                        style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 5),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(5),
                         child: LinearProgressIndicator(
                           backgroundColor: Colors.grey[200],
-                          value: 0.5,
-                          minHeight: 8,
+                          value: state.user.usedSize / state.user.totalSize,
+                          minHeight: 5,
                           color: const Color(0xff7887d6),
                         ),
                       ),

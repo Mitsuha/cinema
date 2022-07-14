@@ -2,15 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:hourglass/model/db.dart';
+import 'package:hourglass/ali_driver/persistence.dart';
+import 'package:hourglass/basic.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class AliDriverSignIn extends StatefulWidget {
   const AliDriverSignIn({Key? key}) : super(key: key);
 
   static const singInUrl = 'https://www.aliyundrive.com/sign/in';
-  static const userAgent =
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.53 Safari/537.36 Edg/103.0.1264.37';
+  static const defaultAvatar = 'https://gw.alicdn.com/imgextra/i4/O1CN01Zqmj9x1yqaZster4k_!!6000000006630-2-tps-128-128.png';
 
   @override
   State<AliDriverSignIn> createState() => _AliDriveInitStackState();
@@ -26,7 +26,10 @@ class _AliDriveInitStackState extends State<AliDriverSignIn> {
 
     if (Platform.isAndroid) WebView.platform = AndroidWebView();
 
-    _timer = Timer(const Duration(seconds: 1), checkStatus);
+    Timer.periodic(const Duration(seconds: 1), (t){
+      _timer = t;
+      checkStatus();
+    });
   }
 
   @override
@@ -46,9 +49,10 @@ class _AliDriveInitStackState extends State<AliDriverSignIn> {
       body: WebView(
         initialUrl: AliDriverSignIn.singInUrl,
         javascriptMode: JavascriptMode.unrestricted,
-        userAgent: AliDriverSignIn.userAgent,
+        userAgent: Basic.userAgent,
         onWebViewCreated: (controller) {
           _controller = controller;
+          _controller?.clearCache();
         },
         navigationDelegate: (navigation) {
           if (navigation.url.contains('/protocol') ||
@@ -84,7 +88,7 @@ class _AliDriveInitStackState extends State<AliDriverSignIn> {
   void checkStatus() async {
     var url = await _controller?.currentUrl();
 
-    if (url != null && url.contains('/drive/')) {
+    if (url != null && ! url.contains('/drive')) {
       return;
     }
 
@@ -95,15 +99,11 @@ class _AliDriveInitStackState extends State<AliDriverSignIn> {
 
       var json = jsonDecode(value.substring(1, value.length - 1));
 
-      DB.name = json['nick_name'];
-      DB.avatar = json['avatar'];
-      DB.accessToken = json['access_token'];
-      DB.refreshToken = json['refresh_token'];
-      DB.rootDriver = json['default_drive_id'];
-      DB.phone = json['user_name'];
-
-      DB.initNotifier.value = false;
-      DB.initNotifier.value = true;
+      AliPersistence.instance.accessToken = json['access_token'];
+      AliPersistence.instance.refreshToken = json['refresh_token'];
+      AliPersistence.instance.rootDriver = json['default_drive_id'];
+      AliPersistence.instance.initState = AliDriverInitState.initialed;
+      AliPersistence.instance.save();
     });
 
     _timer!.cancel();

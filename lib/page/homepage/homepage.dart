@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:hourglass/page/homepage/components/card_item.dart';
-import 'package:hourglass/page/homepage/components/header.dart';
+import 'package:hourglass/basic.dart';
+import 'package:hourglass/page/homepage/components/menu.dart';
+import 'package:hourglass/page/homepage/components/profile.dart';
 import 'package:hourglass/page/homepage/components/selector.dart';
+import 'package:hourglass/page/homepage/state.dart';
 import 'package:hourglass/page/homepage/controller.dart';
-
-import '../../ali_driver/api.dart';
+import 'package:provider/provider.dart';
 
 class Homepage extends StatefulWidget {
-  static const double iconSize = 46;
+  final controller = HomepageController();
 
-  const Homepage({Key? key}) : super(key: key);
+  Homepage({Key? key}) : super(key: key);
 
   @override
   State<Homepage> createState() => _HomepageState();
@@ -20,66 +20,55 @@ class _HomepageState extends State<Homepage> {
   @override
   void initState() {
     super.initState();
+
+    widget.controller.init();
   }
 
   @override
   Widget build(BuildContext context) {
-    var controller = HomepageController.getInstance();
-
-    // AliDriver.refreshToken();
-    controller.loadFile('root');
-
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 30, 28, 10),
-          child: Column(
-            children: [
-              const Header(),
-              const SizedBox(height: 3),
-              Card(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(3.9),
-                  onTap: () {
-                    VideoSelector.open(context);
-                  },
-                  child: CardItem(
-                    icon: Image.asset('assets/images/watch.png',
-                        width: Homepage.iconSize),
-                    title: '创建房间',
-                    subtitle: '选择一段视频和朋友一起看吧',
+    return MultiProvider(
+      providers: [
+        Provider<HomepageController>(create: (_) => widget.controller),
+        ChangeNotifierProvider<HomepageState>(create: (_) => widget.controller.state)
+      ],
+      child: Scaffold(
+        body: Stack(
+          children: [
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(28, 30, 28, 10),
+                child: Column(
+                  children: const [UserProfile(), SizedBox(height: 5), HomepageMenu()],
+                ),
+              ),
+            ),
+            Consumer<HomepageState>(builder: (context, state, _) {
+              if (!state.fileSelectorVisible) {
+                return const SizedBox();
+              }
+              return Positioned.fill(
+                child: AnimatedOpacity(
+                  duration: Basic.animationDuration,
+                  opacity: state.fileSelectorShow ? 1 : 0,
+                  onEnd: () => state.setFileSelectorVisible(false),
+                  child: ColoredBox(
+                    color: const Color(0x50000000),
+                    child: GestureDetector(onTap: widget.controller.hiddenFileSelector),
                   ),
                 ),
-              ),
-              CardItem(
-                icon: Transform.translate(
-                  offset: const Offset(-5, 0),
-                  child: Image.asset('assets/images/get_in.png',
-                      width: Homepage.iconSize),
-                ),
-                title: '加入',
-                subtitle: '已经创建好了房间？选这里',
-              ),
-              CardItem(
-                icon: Transform.translate(
-                  offset: const Offset(-5, 0),
-                  child: Image.asset('assets/images/setting.png',
-                      width: Homepage.iconSize),
-                ),
-                title: '设置',
-                subtitle: '没什么好设置的',
-              ),
-              CardItem(
-                icon: Transform.translate(
-                  offset: const Offset(-5, 0),
-                  child: Image.asset('assets/images/give.png',
-                      width: Homepage.iconSize),
-                ),
-                title: '赞赏',
-                subtitle: '给你认为不错的应用鼓励，这很健康',
-              ),
-            ],
-          ),
+              );
+            }),
+            Consumer<HomepageState>(builder: (context, state, _) {
+              var height = MediaQuery.of(context).size.height / 1.5;
+
+              return AnimatedPositioned(
+                duration: Basic.animationDuration,
+                bottom: state.fileSelectorShow ? 0 : -height,
+                right: 0,
+                child: const FileSelector(),
+              );
+            }),
+          ],
         ),
       ),
     );

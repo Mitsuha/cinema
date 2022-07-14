@@ -1,13 +1,13 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hourglass/ali_driver/models/file.dart';
+import 'package:hourglass/ali_driver/models/play_info.dart';
+import 'package:hourglass/basic.dart';
 import 'package:hourglass/components/player/state.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 import 'package:video_player/video_player.dart';
 import 'package:volume_controller/volume_controller.dart';
-import '../../ali_driver/models/file.dart';
-import '../../ali_driver/models/play_info.dart';
-import '../../model/db.dart';
 
 class PlayerController with ChangeNotifier {
   final PlayerState state = PlayerState();
@@ -46,12 +46,21 @@ class PlayerController with ChangeNotifier {
     switchPlayStatus();
   }
 
+  switchResolution(int i){
+    Source? source = state.currentEpisode?.playInfo?.use(i);
+    if(source == null){
+      return;
+    }
+
+    _loadNewVideo(source);
+  }
+
   _loadNewVideo(Source source) async {
     playerController?.dispose();
     playerController = null;
     state.setVideoControllerInitialing(true);
 
-    playerController = VideoPlayerController.network(source.url, httpHeaders: DB.originHeader);
+    playerController = VideoPlayerController.network(source.url, httpHeaders: Basic.originHeader);
 
     playerController!.addListener(() {
       videoPlayState.setPlayingDuration(playerController!.value.position);
@@ -68,20 +77,31 @@ class PlayerController with ChangeNotifier {
     selectEpisode(0);
   }
 
-  switchPlayStatus() {
+  setPlaySpeed(double speed){
+    playerController?.setPlaybackSpeed(speed);
+    state.setVideoMenu(VideoMenu.none);
+  }
+
+  switchPlayStatus() async {
     if (playerController == null) {
       return;
     }
 
-    playerController!.value.isPlaying ? playerController!.pause() : playerController!.play();
+    playerController!.value.isPlaying ? await playerController!.pause() : await playerController!.play();
 
     state.setPlayStatus(playerController!.value.isPlaying);
   }
 
   switchRibbon() {
+    if (state.videoMenu != VideoMenu.none) {
+      state.setVideoMenu(VideoMenu.none);
+      return;
+    }
+
     if (state.ribbonShow == false) {
       state.ribbonVisibility = true;
     }
+
     state.setRibbonShow(!state.ribbonShow);
   }
 
@@ -155,25 +175,43 @@ class PlayerController with ChangeNotifier {
     }
   }
 
-  onDetectorDone(){
+  onDetectorDone() {
     state.volumeUpdating = false;
     state.brightUpdating = false;
     state.fastForwardTo = Duration.zero;
     state.notifyListeners();
   }
 
-  fullScreen(){
+  fullScreen() {
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft, //全屏时旋转方向，左边
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
-  cancelFullScreen(){
+  cancelFullScreen() {
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp, //全屏时旋转方向，左边
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
+  showPlayList() {
+    state.ribbonShow = false;
+    state.ribbonVisibility = false;
+    state.setVideoMenu(VideoMenu.playList);
+  }
+
+  showResolution(){
+    state.ribbonShow = false;
+    state.ribbonVisibility = false;
+    state.setVideoMenu(VideoMenu.resolution);
+  }
+
+  showSpeed(){
+    state.ribbonShow = false;
+    state.ribbonVisibility = false;
+    state.setVideoMenu(VideoMenu.speed);
   }
 
   @override

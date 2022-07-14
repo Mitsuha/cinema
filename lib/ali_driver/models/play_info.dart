@@ -42,9 +42,12 @@ class Source {
         "FHD": "高清",
       }[resolution];
 
-  get resolutionFullName => {
+  get resolutionFullName {
+    return {
+        "LD": "360P 不是人看的",
         "SD": "540P 流畅",
         "HD": "720P 标清",
-        "FHD": "11080P 高清",
+        "FHD": "1080P 高清",
       }[resolution];
+  }
 }

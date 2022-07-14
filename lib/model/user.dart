@@ -1,29 +1,36 @@
 class User {
+  String name;
+  String avatar;
+  String phone;
+  int totalSize;
+  int usedSize;
 
+  User({
+    required this.name,
+    required this.avatar,
+    required this.phone,
+    required this.totalSize,
+    required this.usedSize,
+  });
 
+  factory User.fromJson(json) => User(
+        name: json['nick_name'],
+        avatar: json['avatar'] != ''
+            ? json['avatar']
+            : 'https://gw.alicdn.com/imgextra/i4/O1CN01Zqmj9x1yqaZster4k_!!6000000006630-2-tps-128-128.png',
+        phone: json['phone'],
+        totalSize: json['total_size'],
+        usedSize: json['used_size'],
+      );
 
-//   String name;
-//   String avatar;
-//   String accessToken;
-//   String refreshToken;
-//   String rootDriver;
-//   String phone;
+  factory User.guest() => User(
+        name: 'Guest',
+        avatar: 'https://gw.alicdn.com/imgextra/i4/O1CN01Zqmj9x1yqaZster4k_!!6000000006630-2-tps-128-128.png',
+        phone: '',
+        totalSize: 1,
+        usedSize: 0,
+      );
 
-  // User({
-  //   required this.name,
-  //   required this.avatar,
-  //   required this.accessToken,
-  //   required this.refreshToken,
-  //   required this.rootDriver,
-  //   required this.phone,
-  // });
-  //
-  // factory User.fromJson(json) => User(
-  //       name: json['name'],
-  //       avatar: json['avatar'],
-  //       accessToken: json['access_token'],
-  //       refreshToken: json['refresh_token'],
-  //       rootDriver: json['default_drive_id'],
-  //       phone: json['refresh_token'],
-  //     );
+  get totalSizeFormat => totalSize / 1024 / 1024 ~/ 1024;
+  get usedSizeFormat => usedSize / 1024 / 1024 ~/ 1024;
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hourglass/model/db.dart';
+import 'package:hourglass/ali_driver/persistence.dart';
 import 'package:hourglass/page/ali_drive_sing_in.dart';
 import 'package:hourglass/page/homepage/homepage.dart';
 import 'package:hourglass/page/welcome_page.dart';
@@ -11,8 +11,6 @@ void main() {
   /// todo: https://github.com/rrousselGit/provider/issues/356
   Provider.debugCheckInvalidValueType = null;
 
-  DB.init();
-
   runApp(const MyApp());
 }
 
@@ -21,23 +19,27 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Hourglass',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: ValueListenableBuilder(
-        valueListenable: DB.initNotifier,
-        builder: (BuildContext context, value, Widget? _){
-          if(value == false) {
-            return const WelcomePage();
-          }
+    return ChangeNotifierProvider<AliPersistence>(
+      create: (_) => AliPersistence.init(),
+      child: MaterialApp(
+        title: 'Hourglass',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: Consumer<AliPersistence>(
+          builder: (BuildContext context, db, _){
+            print(db.initState);
+            if(db.initState == AliDriverInitState.initialing) {
+              return const WelcomePage();
+            }
 
-          if(DB.accessToken == null){
-            return const AliDriverSignIn();
-          }
-          return const Homepage();
-        },
+            if(db.initState == AliDriverInitState.fail){
+              return const AliDriverSignIn();
+            }
+
+            return Homepage();
+          },
+        ),
       ),
     );
   }

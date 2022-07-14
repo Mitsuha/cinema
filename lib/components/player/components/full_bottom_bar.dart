@@ -31,17 +31,17 @@ class FullBottomBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               TextButton.icon(
-                onPressed: () {},
+                onPressed: controller.showPlayList,
                 icon: const Icon(Icons.playlist_play,color: Colors.white),
                 label: const Text('播放列表', style: TextStyle(color:Colors.white)),
               ),
               TextButton.icon(
-                onPressed: () {},
+                onPressed: controller.showSpeed,
                 icon: const Icon(Icons.speed, color:Colors.white),
                 label: const Text('倍速播放', style: TextStyle(color:Colors.white)),
               ),
               TextButton.icon(
-                onPressed: () {},
+                onPressed: controller.showResolution,
                 icon: const Icon(Icons.hd_outlined, color:Colors.white),
                 label: const Text('清晰度', style: TextStyle(color:Colors.white)),
               ),

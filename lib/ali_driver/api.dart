@@ -1,15 +1,15 @@
 import 'package:hourglass/ali_driver/models/file.dart';
 import 'package:hourglass/ali_driver/models/play_info.dart';
 import 'package:hourglass/ali_driver/request.dart';
-import 'package:hourglass/model/db.dart';
+import 'package:hourglass/ali_driver/persistence.dart';
 
 class AliDriver {
-  static final Request _request = Request(bearerToken: DB.accessToken);
+  static Request _request = Request(bearerToken: AliPersistence.instance.accessToken);
 
   static Future<List<AliFile>> fileList({String parentFileID = 'root'}) async {
-    var response = await _request.post('https://api.aliyundrive.com/adrive/v3/file/list', data: {
+    var response = await _request.post('/adrive/v3/file/list', data: {
       'all': false,
-      'drive_id': DB.rootDriver,
+      'drive_id': AliPersistence.instance.rootDriver,
       'fields': "*",
       'limit': 100,
       'order_by': "name",
@@ -28,15 +28,16 @@ class AliDriver {
 
   static refreshToken() async {
     var response = await _request.post('/token/refresh', data: {
-      "refresh_token": DB.refreshToken,
+      "refresh_token": AliPersistence.instance.refreshToken,
     });
 
-    DB.accessToken = response.body['access_token'];
+    AliPersistence.instance.accessToken = response.body['access_token'];
+    _request = Request(bearerToken: AliPersistence.instance.accessToken);
   }
 
   static Future<PlayInfo> videoPlayInfo(String fileID) async {
     var response = await _request.post('/v2/file/get_video_preview_play_info', data: {
-      "drive_id": DB.rootDriver,
+      "drive_id": AliPersistence.instance.rootDriver,
       "file_id": fileID,
       "category": "live_transcoding",
       "template_id": "",
@@ -54,5 +55,12 @@ class AliDriver {
       "template_id": "",
       "get_subtitle_info": true
     });
+  }
+
+  static Future<Response> userProfile() {
+     return _request.post('/adrive/v2/user/get',data: {});
+  }
+  static Future<Response> userDriverInfo() {
+     return _request.post('/v2/databox/get_personal_info',data: {});
   }
 }
