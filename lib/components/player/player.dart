@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hourglass/components/player/components/menu.dart';
-import 'package:hourglass/components/player/components/simple_bottom_bar.dart';
 import 'package:hourglass/components/player/controller.dart';
 import 'package:hourglass/components/player/components/detector.dart';
 import 'package:hourglass/components/player/ribbon.dart';
@@ -23,7 +22,7 @@ class _PlayerState extends State<Player> {
   void initState() {
     super.initState();
 
-    widget.controller.init();
+    widget.controller.initState();
   }
 
   @override

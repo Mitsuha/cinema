@@ -4,7 +4,7 @@ import 'package:hourglass/ali_driver/api.dart';
 import 'package:hourglass/ali_driver/models/file.dart';
 import 'package:hourglass/model/user.dart';
 import 'package:hourglass/page/homepage/state.dart';
-import 'package:hourglass/page/video_play/view.dart';
+import 'package:hourglass/page/watch/view.dart';
 
 class HomepageController {
   final HomepageState state = HomepageState();
@@ -72,7 +72,7 @@ class HomepageController {
 
   goToPlay(BuildContext context, List<AliFile> videos) {
     Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context){
-      return VideoPlayPage(playlist: videos);
+      return WatchPage(playlist: videos);
     }));
   }
 }

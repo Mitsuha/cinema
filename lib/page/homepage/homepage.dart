@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hourglass/basic.dart';
 import 'package:hourglass/page/homepage/components/menu.dart';
 import 'package:hourglass/page/homepage/components/profile.dart';
+import 'package:hourglass/page/homepage/components/profile_skeleton.dart';
 import 'package:hourglass/page/homepage/components/selector.dart';
 import 'package:hourglass/page/homepage/state.dart';
 import 'package:hourglass/page/homepage/controller.dart';

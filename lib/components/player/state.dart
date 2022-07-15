@@ -6,7 +6,8 @@ enum VideoMenu{
   none,
   playList,
   speed,
-  resolution
+  resolution,
+  subtitle,
 }
 
 class VideoPlayState with ChangeNotifier{

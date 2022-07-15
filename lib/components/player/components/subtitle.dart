@@ -3,8 +3,8 @@ import 'package:hourglass/components/player/state.dart';
 import 'package:provider/provider.dart';
 import '../controller.dart';
 
-class SelectResolution extends StatelessWidget {
-  const SelectResolution({Key? key}) : super(key: key);
+class SelectSubtitle extends StatelessWidget {
+  const SelectSubtitle({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -14,21 +14,20 @@ class SelectResolution extends StatelessWidget {
     if (state.currentEpisode?.playInfo == null) {
       return const SizedBox();
     }
+    var subtitles = state.currentEpisode!.playInfo!.subtitles;
 
-    var sources = state.currentEpisode!.playInfo!.sources;
+    const TextStyle normal = TextStyle(color: Colors.white);
+    const TextStyle active = TextStyle(color: Color(0xffff889c));
 
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (var source in sources)
-            TextButton(
-              onPressed: () => controller.switchResolution(source),
-              child: Text(
-                source.resolutionFullName,
-                style: TextStyle(color: source.current ? const Color(0xffff889c) : Colors.white),
-              ),
-            ),
+          for(var subtitle in subtitles)
+          TextButton(
+            child: Text(subtitle.language, style: subtitle.current ? active : normal),
+            onPressed: () => controller.switchSubtitle(subtitle),
+          ),
         ],
       ),
     );

@@ -1,18 +1,18 @@
-import 'package:flutter/cupertino.dart';
 import 'package:hourglass/ali_driver/models/play_info.dart';
 
 import '../api.dart';
 
 class AliFile {
+  final int size;
   final String driveID;
   final String fileID;
   final String name;
   final String parentFileID;
   final String type;
   final String updatedAt;
-  final String createdAt;
   final String category;
   final String thumbnail;
+  final DateTime createdAt;
   PlayInfo? playInfo;
   VideoMetadata? videoMetadata;
 
@@ -26,16 +26,18 @@ class AliFile {
     required this.createdAt,
     required this.category,
     required this.thumbnail,
+    required this.size,
     this.videoMetadata,
   });
 
   factory AliFile.formJson(json) => AliFile(
+        size: json['size'] ?? 0,
         driveID: json['drive_id'],
         fileID: json['file_id'],
         name: json['name'],
         parentFileID: json['parent_file_id'],
         type: json['type'],
-        createdAt: json['created_at'],
+        createdAt: DateTime.parse(json['created_at']),
         updatedAt: json['updated_at'],
         category: json['category'] ?? 'file',
         thumbnail: json['thumbnail'] ??

@@ -8,9 +8,9 @@ class User {
   User({
     required this.name,
     required this.avatar,
-    required this.phone,
-    required this.totalSize,
-    required this.usedSize,
+    this.phone = '',
+    this.totalSize = 0,
+    this.usedSize = 0,
   });
 
   factory User.fromJson(json) => User(
@@ -30,7 +30,4 @@ class User {
         totalSize: 1,
         usedSize: 0,
       );
-
-  get totalSizeFormat => totalSize / 1024 / 1024 ~/ 1024;
-  get usedSizeFormat => usedSize / 1024 / 1024 ~/ 1024;
 }

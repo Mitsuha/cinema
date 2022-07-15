@@ -5,7 +5,8 @@ import 'package:hourglass/model/user.dart';
 class HomepageState with ChangeNotifier {
   var folderPaths = <String>['root'];
   List<AliFile> files = [];
-  User user = User.guest();
+  late User user;// = User.guest();
+  bool userInitial = false;
 
   /// file selector show
   bool fileSelectorShow = false;
@@ -13,6 +14,7 @@ class HomepageState with ChangeNotifier {
 
   setUser(User u){
     user = u;
+    userInitial = true;
     notifyListeners();
   }
 

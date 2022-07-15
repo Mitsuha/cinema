@@ -13,10 +13,11 @@ import 'package:video_player/video_player.dart';
 import 'package:volume_controller/volume_controller.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-class PlayerController with ChangeNotifier {
+class PlayerController {
   final PlayerState state = PlayerState();
   final VideoPlayState videoPlayState = VideoPlayState();
-  final VolumeController volumeController = VolumeController()..showSystemUI = false;
+  final VolumeController volumeController = VolumeController()
+    ..showSystemUI = false;
   final ScreenBrightness screenBrightness = ScreenBrightness();
   final ValueNotifier sliderValueNotifier = ValueNotifier(0.0);
 
@@ -27,7 +28,7 @@ class PlayerController with ChangeNotifier {
 
   PlayerController();
 
-  init() {
+  initState() {
     volumeController.listener((v) {
       if (!state.volumeUpdating) {
         return state.setVolumeValue(v);
@@ -87,22 +88,32 @@ class PlayerController with ChangeNotifier {
 
     if ((episode.videoMetadata?.width ?? 0) >= 1080) {
       loadOriginVideo(episode).then((_) {
-        if (episode.videoMetadata!.width != 1080) {
+        if (episode.videoMetadata!.height != 1080) {
           Fluttertoast.showToast(msg: '本视频可选原画画质');
         }
       });
     }
   }
 
-  switchResolution(int i) async {
+  switchSubtitle(Subtitle subtitle){
+    if (playerController == null) {
+      return;
+    }
+
+    if (state.currentEpisode?.playInfo?.useSubtitle(subtitle) == null) {
+      return;
+    }
+
+  }
+
+  switchResolution(Source source) async {
     if (playerController == null) {
       return;
     }
 
     var position = playerController!.value.position;
 
-    Source? source = state.currentEpisode?.playInfo?.use(i);
-    if (source == null) {
+    if (state.currentEpisode?.playInfo?.useSource(source) == null) {
       return;
     }
 
@@ -116,7 +127,18 @@ class PlayerController with ChangeNotifier {
     playerController = null;
     state.setVideoControllerInitialing(true);
 
-    playerController = VideoPlayerController.network(source.url, httpHeaders: Basic.originHeader);
+    try{
+      playerController = VideoPlayerController.network(
+        source.url,
+        httpHeaders: Basic.originHeader,
+        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true, allowBackgroundPlayback: true),
+      );
+    }catch(e){
+      Fluttertoast.showToast(msg: '视频加载失败，建议返回重进');
+
+      state.setVideoControllerInitialing(false);
+      return;
+    }
 
     playerController!.addListener(() {
       videoPlayState.setPlayingDuration(playerController!.value.position);
@@ -131,6 +153,10 @@ class PlayerController with ChangeNotifier {
     state.playlist = playlist;
 
     selectEpisode(0);
+  }
+
+  List<AliFile> get playList {
+    return state.playlist;
   }
 
   setPlaySpeed(double speed) {
@@ -276,6 +302,12 @@ class PlayerController with ChangeNotifier {
     state.setVideoMenu(VideoMenu.speed);
   }
 
+  showSubtitle() {
+    state.ribbonShow = false;
+    state.ribbonVisibility = false;
+    state.setVideoMenu(VideoMenu.subtitle);
+  }
+
   Future<void> loadOriginVideo(AliFile file) async {
     if (file.playInfo == null || file.videoMetadata == null) {
       return;
@@ -293,10 +325,7 @@ class PlayerController with ChangeNotifier {
         0, Source(url: response.body['cdn_url'], resolution: "${meta.width}x${meta.height} 原画"));
   }
 
-  @override
   void dispose() {
-    super.dispose();
-
     playerController?.dispose();
     sliderValueNotifier.dispose();
     volumeController.removeListener();

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hourglass/page/homepage/components/profile_skeleton.dart';
 import 'package:hourglass/page/homepage/state.dart';
 import 'package:provider/provider.dart';
+import 'package:hourglass/helpers.dart';
 
 class UserProfile extends StatelessWidget {
   const UserProfile({Key? key}) : super(key: key);
@@ -8,6 +10,10 @@ class UserProfile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final HomepageState state = context.watch<HomepageState>();
+
+    if (! state.userInitial){
+      return const UserProfileSkeleton();
+    }
 
     return Card(
       color: Colors.white,
@@ -32,7 +38,7 @@ class UserProfile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${state.user.usedSizeFormat} GB / ${state.user.totalSizeFormat} GB',
+                        '${state.user.usedSize.toByteString()} / ${state.user.totalSize.toByteString()}',
                         style: const TextStyle(fontSize: 11, color: Colors.grey),
                       ),
                       const SizedBox(height: 5),

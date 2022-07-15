@@ -78,7 +78,7 @@ class PlayerRibbon extends StatelessWidget {
             opacity: state.ribbonShow ? 1 : 0,
             duration: const Duration(milliseconds: 300),
             onEnd: controller.updateRibbonVisibility,
-            child: state.orientation == Orientation.portrait ? const SimpleBottomBar() : FullBottomBar(),
+            child: state.orientation == Orientation.portrait ? const SimpleBottomBar() : const FullBottomBar(),
           ),
         ),
       ],
