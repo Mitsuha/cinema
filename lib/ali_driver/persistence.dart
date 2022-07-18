@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hourglass/ali_driver/api.dart';
+import 'package:hourglass/main.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum AliDriverInitState {
@@ -26,6 +28,14 @@ class AliPersistence with ChangeNotifier {
 
   static AliPersistence init() {
     return _instance ??= AliPersistence._internal();
+  }
+
+  static Widget warp({required child}){
+    var instance = AliPersistence.init();
+    return ChangeNotifierProvider<AliPersistence>(
+      create: (_) => instance,
+      child: child,
+    );
   }
 
   static AliPersistence get instance => _instance!;

@@ -14,7 +14,7 @@ import 'package:volume_controller/volume_controller.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class PlayerController {
-  final PlayerState state = PlayerState();
+  final PlayerState _state = PlayerState();
   final VideoPlayState videoPlayState = VideoPlayState();
   final VolumeController volumeController = VolumeController()
     ..showSystemUI = false;
@@ -30,15 +30,19 @@ class PlayerController {
 
   initState() {
     volumeController.listener((v) {
-      if (!state.volumeUpdating) {
-        return state.setVolumeValue(v);
+      if (!_state.volumeUpdating) {
+        return _state.setVolumeValue(v);
       }
     });
     screenBrightness.onCurrentBrightnessChanged.listen((v) {
-      if (!state.volumeUpdating) {
-        state.setBrightValue(v);
+      if (!_state.volumeUpdating) {
+        _state.setBrightValue(v);
       }
     });
+  }
+
+  PlayerState getState(){
+    return _state;
   }
 
   registerSensorsListener() {
@@ -50,49 +54,49 @@ class PlayerController {
       rotateY += event.y;
 
       if ((rotateY - basicY).abs() > 8) {
-        if (state.deviceOrientation == DeviceOrientation.landscapeRight) {
+        if (_state.deviceOrientation == DeviceOrientation.landscapeRight) {
           rotateY = basicY + sen;
-        } else if (state.deviceOrientation == DeviceOrientation.landscapeLeft) {
+        } else if (_state.deviceOrientation == DeviceOrientation.landscapeLeft) {
           rotateY = basicY - sen;
         }
       }
 
-      if (rotateY - basicY < -sen && state.deviceOrientation == DeviceOrientation.landscapeRight) {
+      if (rotateY - basicY < -sen && _state.deviceOrientation == DeviceOrientation.landscapeRight) {
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.landscapeLeft, //全屏时旋转方向，左边
         ]);
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-        state.deviceOrientation = DeviceOrientation.landscapeLeft;
+        _state.deviceOrientation = DeviceOrientation.landscapeLeft;
       }
-      if (rotateY - basicY > sen && state.deviceOrientation == DeviceOrientation.landscapeLeft) {
+      if (rotateY - basicY > sen && _state.deviceOrientation == DeviceOrientation.landscapeLeft) {
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.landscapeRight, //全屏时旋转方向，左边
         ]);
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-        state.deviceOrientation = DeviceOrientation.landscapeRight;
+        _state.deviceOrientation = DeviceOrientation.landscapeRight;
       }
     });
   }
 
   selectEpisode(int i) async {
-    AliFile episode = state.playlist[i];
+    AliFile episode = _state.playlist[i];
 
     if (!episode.playInfoLoaded) {
       await episode.loadPlayInfo();
     }
-    state.setCurrentEpisode(episode);
+    _state.setCurrentEpisode(episode);
 
     _loadNewVideo(episode.playInfo!.useTheBast());
 
     switchPlayStatus();
 
-    if ((episode.videoMetadata?.width ?? 0) >= 1080) {
-      loadOriginVideo(episode).then((_) {
-        if (episode.videoMetadata!.height != 1080) {
-          Fluttertoast.showToast(msg: '本视频可选原画画质');
-        }
-      });
-    }
+    // if ((episode.videoMetadata?.width ?? 0) >= 1080) {
+    //   loadOriginVideo(episode).then((_) {
+    //     if (episode.videoMetadata!.height != 1080) {
+    //       Fluttertoast.showToast(msg: '本视频可选原画画质');
+    //     }
+    //   });
+    // }
   }
 
   switchSubtitle(Subtitle subtitle){
@@ -100,7 +104,7 @@ class PlayerController {
       return;
     }
 
-    if (state.currentEpisode?.playInfo?.useSubtitle(subtitle) == null) {
+    if (_state.currentEpisode?.playInfo?.useSubtitle(subtitle) == null) {
       return;
     }
 
@@ -113,7 +117,7 @@ class PlayerController {
 
     var position = playerController!.value.position;
 
-    if (state.currentEpisode?.playInfo?.useSource(source) == null) {
+    if (_state.currentEpisode?.playInfo?.useSource(source) == null) {
       return;
     }
 
@@ -125,7 +129,7 @@ class PlayerController {
   _loadNewVideo(Source source) async {
     playerController?.dispose();
     playerController = null;
-    state.setVideoControllerInitialing(true);
+    _state.setVideoControllerInitialing(true);
 
     try{
       playerController = VideoPlayerController.network(
@@ -136,7 +140,7 @@ class PlayerController {
     }catch(e){
       Fluttertoast.showToast(msg: '视频加载失败，建议返回重进');
 
-      state.setVideoControllerInitialing(false);
+      _state.setVideoControllerInitialing(false);
       return;
     }
 
@@ -146,22 +150,26 @@ class PlayerController {
 
     await playerController!.initialize();
 
-    state.setVideoControllerInitialing(false);
+    _state.setVideoControllerInitialing(false);
   }
 
   setPlayList(List<AliFile> playlist) {
-    state.playlist = playlist;
+    _state.playlist = playlist;
 
     selectEpisode(0);
   }
 
   List<AliFile> get playList {
-    return state.playlist;
+    return _state.playlist;
+  }
+
+  AliFile? get currentEpisode{
+    return _state.currentEpisode;
   }
 
   setPlaySpeed(double speed) {
     playerController?.setPlaybackSpeed(speed);
-    state.setVideoMenu(VideoMenu.none);
+    _state.setVideoMenu(VideoMenu.none);
   }
 
   switchPlayStatus() async {
@@ -173,24 +181,24 @@ class PlayerController {
         ? await playerController!.pause()
         : await playerController!.play();
 
-    state.setPlayStatus(playerController!.value.isPlaying);
+    _state.setPlayStatus(playerController!.value.isPlaying);
   }
 
   switchRibbon() {
-    if (state.videoMenu != VideoMenu.none) {
-      state.setVideoMenu(VideoMenu.none);
+    if (_state.videoMenu != VideoMenu.none) {
+      _state.setVideoMenu(VideoMenu.none);
       return;
     }
 
-    if (state.ribbonShow == false) {
-      state.ribbonVisibility = true;
+    if (_state.ribbonShow == false) {
+      _state.ribbonVisibility = true;
     }
 
-    state.setRibbonShow(!state.ribbonShow);
+    _state.setRibbonShow(!_state.ribbonShow);
   }
 
   updateRibbonVisibility() {
-    state.setRibbonVisibility(state.ribbonShow);
+    _state.setRibbonVisibility(_state.ribbonShow);
   }
 
   seekTo(int seconds) {
@@ -205,65 +213,65 @@ class PlayerController {
     if (playerController == null) {
       return;
     }
-    int second = state.fastForwardTo == Duration.zero
+    int second = _state.fastForwardTo == Duration.zero
         ? playerController!.value.position.inSeconds
-        : state.fastForwardTo.inSeconds;
+        : _state.fastForwardTo.inSeconds;
 
-    state.setFastForwardTo(Duration(seconds: second + (details.delta.dx * 3).toInt()));
+    _state.setFastForwardTo(Duration(seconds: second + (details.delta.dx * 3).toInt()));
   }
 
   doFastForward(DragEndDetails _) {
-    playerController?.seekTo(state.fastForwardTo);
-    state.setFastForwardTo(Duration.zero);
+    playerController?.seekTo(_state.fastForwardTo);
+    _state.setFastForwardTo(Duration.zero);
   }
 
   addBright(DragUpdateDetails details) {
-    var bright = state.brightValue;
+    var bright = _state.brightValue;
 
     if (details.delta.dy == 0) {
       return;
     }
-    if (!state.brightUpdating) {
-      state.setBrightUpdating(true);
+    if (!_state.brightUpdating) {
+      _state.setBrightUpdating(true);
     }
 
     bright -= (details.delta.dy / 100);
     bright = max(min(bright, 1.0), 0);
 
     screenBrightness.setScreenBrightness(bright);
-    state.setBrightValue(bright);
+    _state.setBrightValue(bright);
   }
 
   addVolume(DragUpdateDetails details) async {
-    var volume = state.volumeValue;
+    var volume = _state.volumeValue;
 
     if (details.delta.dy == 0) {
       return;
     }
-    if (!state.volumeUpdating) {
-      state.setVolumeUpdating(true);
+    if (!_state.volumeUpdating) {
+      _state.setVolumeUpdating(true);
     }
 
     volume -= (details.delta.dy / 100);
     volume = max(min(volume, 1.0), 0);
 
     volumeController.setVolume(volume);
-    state.setVolumeValue(volume);
+    _state.setVolumeValue(volume);
   }
 
   addBrightOrVolumeDone(DragEndDetails _) {
-    if (state.volumeUpdating) {
-      state.setVolumeUpdating(false);
-    } else if (state.brightUpdating) {
-      state.setBrightUpdating(false);
+    if (_state.volumeUpdating) {
+      _state.setVolumeUpdating(false);
+    } else if (_state.brightUpdating) {
+      _state.setBrightUpdating(false);
     }
   }
 
   onDetectorDone() {
-    state.volumeUpdating = false;
-    state.brightUpdating = false;
-    state.fastForwardTo = Duration.zero;
-    state.notifyListeners();
+    _state.volumeUpdating = false;
+    _state.brightUpdating = false;
+    _state.fastForwardTo = Duration.zero;
+    _state.notifyListeners();
   }
 
   fullScreen() {
@@ -273,7 +281,7 @@ class PlayerController {
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-    state.deviceOrientation = DeviceOrientation.landscapeLeft;
+    _state.deviceOrientation = DeviceOrientation.landscapeLeft;
     registerSensorsListener();
   }
 
@@ -285,27 +293,27 @@ class PlayerController {
   }
 
   showPlayList() {
-    state.ribbonShow = false;
-    state.ribbonVisibility = false;
-    state.setVideoMenu(VideoMenu.playList);
+    _state.ribbonShow = false;
+    _state.ribbonVisibility = false;
+    _state.setVideoMenu(VideoMenu.playList);
   }
 
   showResolution() {
-    state.ribbonShow = false;
-    state.ribbonVisibility = false;
-    state.setVideoMenu(VideoMenu.resolution);
+    _state.ribbonShow = false;
+    _state.ribbonVisibility = false;
+    _state.setVideoMenu(VideoMenu.resolution);
   }
 
   showSpeed() {
-    state.ribbonShow = false;
-    state.ribbonVisibility = false;
-    state.setVideoMenu(VideoMenu.speed);
+    _state.ribbonShow = false;
+    _state.ribbonVisibility = false;
+    _state.setVideoMenu(VideoMenu.speed);
   }
 
   showSubtitle() {
-    state.ribbonShow = false;
-    state.ribbonVisibility = false;
-    state.setVideoMenu(VideoMenu.subtitle);
+    _state.ribbonShow = false;
+    _state.ribbonVisibility = false;
+    _state.setVideoMenu(VideoMenu.subtitle);
   }
 
   Future<void> loadOriginVideo(AliFile file) async {

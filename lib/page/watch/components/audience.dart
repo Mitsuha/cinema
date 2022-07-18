@@ -20,6 +20,7 @@ class WatchAudience extends StatelessWidget {
           ),
           Expanded(
             child: ListView(
+              physics: const BouncingScrollPhysics(),
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               children: [

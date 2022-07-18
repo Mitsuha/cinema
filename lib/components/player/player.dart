@@ -26,18 +26,11 @@ class _PlayerState extends State<Player> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-
-    widget.controller.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         Provider<PlayerController>(create: (_) => widget.controller),
-        ChangeNotifierProvider<PlayerState>(create: (_) => widget.controller.state),
+        ChangeNotifierProvider<PlayerState>(create: (_) => widget.controller.getState()),
         ChangeNotifierProvider<VideoPlayState>(create: (_) => widget.controller.videoPlayState),
       ],
       builder: (BuildContext context, _) {

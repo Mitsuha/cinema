@@ -6,7 +6,15 @@ class WatchController {
   final PlayerController player = PlayerController();
   final WatchState state = WatchState();
 
-  setPlayList(List<AliFile> playlist){
+  setPlayList(List<AliFile> playlist) {
     player.setPlayList(playlist);
+  }
+
+  dispose() {
+    player.dispose();
+  }
+
+  selectEpisode(i) {
+    state.setState(() => player.selectEpisode(i));
   }
 }

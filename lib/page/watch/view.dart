@@ -17,6 +17,7 @@ class WatchPage extends StatefulWidget {
 
 class _WatchPageState extends State<WatchPage> {
   final WatchController controller = WatchController();
+  final playerKey = GlobalKey();
 
   @override
   void initState() {
@@ -25,17 +26,24 @@ class _WatchPageState extends State<WatchPage> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+
+    controller.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final Player player = Player(key: playerKey,controller: controller.player);
+
     return MultiProvider(
       providers: [
         Provider<WatchController>(create: (_) => controller),
         ChangeNotifierProvider<WatchState>(create: (_) => controller.state),
       ],
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: OrientationBuilder(builder: (context, Orientation orientation) {
-        Player player = Player(controller: controller.player);
-
+      child: Material(
+        color: Colors.white,
+        child: OrientationBuilder(builder: (context, Orientation orientation) {
         if (orientation == Orientation.landscape) {
           return player;
         }

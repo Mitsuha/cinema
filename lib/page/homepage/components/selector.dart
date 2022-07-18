@@ -62,14 +62,7 @@ class FileSelector extends StatelessWidget {
                     return ListTile(
                       onTap: () => controller.openFile(context, file),
                       leading: fileCover(file),
-                      title: RichText(
-                        softWrap: false,
-                        overflow: TextOverflow.ellipsis,
-                        text: TextSpan(
-                          style: const TextStyle(color: Colors.black, fontSize: 14),
-                          text: file.name,
-                        ),
-                      ),
+                      title: Text(file.name, softWrap: false, overflow: TextOverflow.fade),
                     );
                   },
                 ),

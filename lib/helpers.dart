@@ -36,7 +36,7 @@ extension IntToString on int{
       if (a / 1024 > 1024) {
         a = a / 1024;
       }else{
-        return a.toInt().toString() + element;
+        return (a / 1024).toStringAsFixed(2) + element;
       }
     }
     return toString();
