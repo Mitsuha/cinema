@@ -2,35 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:hourglass/basic.dart';
 import 'package:hourglass/page/homepage/components/menu.dart';
 import 'package:hourglass/page/homepage/components/profile.dart';
-import 'package:hourglass/page/homepage/components/profile_skeleton.dart';
 import 'package:hourglass/page/homepage/components/selector.dart';
 import 'package:hourglass/page/homepage/state.dart';
 import 'package:hourglass/page/homepage/controller.dart';
 import 'package:provider/provider.dart';
 
 class Homepage extends StatefulWidget {
-  final controller = HomepageController();
-
-  Homepage({Key? key}) : super(key: key);
+  const Homepage({Key? key}) : super(key: key);
 
   @override
   State<Homepage> createState() => _HomepageState();
 }
 
 class _HomepageState extends State<Homepage> {
+  final controller = HomepageController();
+
   @override
   void initState() {
     super.initState();
 
-    widget.controller.init();
+    controller.init();
   }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<HomepageController>(create: (_) => widget.controller),
-        ChangeNotifierProvider<HomepageState>(create: (_) => widget.controller.state)
+        Provider<HomepageController>(create: (_) => controller),
+        ChangeNotifierProvider<HomepageState>(create: (_) => controller.state)
       ],
       child: Scaffold(
         body: Stack(
@@ -54,7 +53,7 @@ class _HomepageState extends State<Homepage> {
                   onEnd: () => state.setFileSelectorVisible(false),
                   child: ColoredBox(
                     color: const Color(0x50000000),
-                    child: GestureDetector(onTap: widget.controller.hiddenFileSelector),
+                    child: GestureDetector(onTap: controller.hiddenFileSelector),
                   ),
                 ),
               );

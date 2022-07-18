@@ -7,7 +7,7 @@ class Basic {
   static const userAgent =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.53 Safari/537.36 Edg/103.0.1264.37';
 
-  static const remoteAddress = 'ws://192.168.8.30:3096/ws';
+  static const remoteAddress = 'ws://192.168.8.31:3096/ws';
 
   static const animationDuration = Duration(milliseconds: 150);
 }

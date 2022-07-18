@@ -1,35 +1,46 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hourglass/ali_driver/persistence.dart';
 import 'package:hourglass/basic.dart';
 import 'package:web_socket_channel/io.dart';
 
-class Ws{
+class Ws {
   static Ws? _instance;
+
   static Ws get instance => _instance!;
 
   IOWebSocketChannel channel;
   bool registered = false;
-  Ws._internal(this.channel);
 
-  static connect() {
-    _instance ??= Ws._internal(IOWebSocketChannel.connect(Uri.parse(Basic.remoteAddress))..stream.listen((event) {
-      print(event);
-    },onError: (e){
-      print(e);
-    }));
+  static Ws connect() {
+    return _instance ??= Ws._internal(_getWsConnect());
   }
 
-  static Widget warp({required Widget child}){
-    AliPersistence.instance.addListener(() {
-      if(instance.registered == false && AliPersistence.instance.initState == AliDriverInitState.initialed){
-        instance.register();
-      }
+  static IOWebSocketChannel _getWsConnect() {
+    return IOWebSocketChannel.connect(Uri.parse(Basic.remoteAddress));
+  }
+
+  Ws._internal(this.channel) {
+    channel.stream.listen(null, onError: (err) {
+      reconnect();
     });
-    return child;
   }
 
-  register(){
+  reconnect() {
+    channel = _getWsConnect()
+      ..stream.listen(null, onError: (err) {
+        if (kDebugMode) {
+          print(err);
+        }
+        reconnect();
+      });
+  }
+
+  register() {
     print('send');
   }
 
+  logout(){
+
+  }
 }
