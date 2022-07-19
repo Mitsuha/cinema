@@ -10,13 +10,13 @@ class WatchAudience extends StatelessWidget {
   Widget build(BuildContext context) {
     var state = context.watch<WatchState>();
     return SizedBox(
-      height: 90,
+      height: 75,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 11, top: 8),
-            child: Text('当前 ${state.users.length} 人'),
+            padding: const EdgeInsets.only(left: 11, top: 8, bottom: 5),
+            child: Text('当前 ${state.room.users.length} 人'),
           ),
           Expanded(
             child: ListView(
@@ -24,13 +24,13 @@ class WatchAudience extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               children: [
-                for (var user in state.users)
+                for (var user in state.room.users)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 3),
                     child: CircleAvatar(backgroundImage: NetworkImage(user.avatar)),
                   ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 11),
+                  padding: const EdgeInsets.all(2),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,

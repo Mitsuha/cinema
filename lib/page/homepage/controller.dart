@@ -5,6 +5,7 @@ import 'package:hourglass/ali_driver/models/file.dart';
 import 'package:hourglass/model/user.dart';
 import 'package:hourglass/page/homepage/state.dart';
 import 'package:hourglass/page/watch/view.dart';
+import 'package:hourglass/websocket/ws.dart';
 
 class HomepageController {
   final HomepageState state = HomepageState();
@@ -12,6 +13,12 @@ class HomepageController {
   init()  {
     getUserInfo();
     loadFile('root');
+
+    state.addListener(() {
+      if (state.userInitial && state.user.id != Ws.instance.user?.id) {
+        Ws.instance.register(state.user);
+      }
+    });
   }
 
   getUserInfo()async {

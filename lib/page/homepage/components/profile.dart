@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hourglass/model/user.dart';
 import 'package:hourglass/page/homepage/components/profile_skeleton.dart';
 import 'package:hourglass/page/homepage/state.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,7 @@ class UserProfile extends StatelessWidget {
     if (! state.userInitial){
       return const UserProfileSkeleton();
     }
+    context.read<User>().merge(state.user);
 
     return Card(
       color: Colors.white,

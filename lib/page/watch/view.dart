@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:hourglass/ali_driver/models/file.dart';
 import 'package:hourglass/components/player/player.dart';
+import 'package:hourglass/model/room.dart';
 import 'package:hourglass/page/watch/controller.dart';
 import 'package:hourglass/page/watch/interactive.dart';
 import 'package:hourglass/page/watch/state.dart';
 import 'package:provider/provider.dart';
 
 class WatchPage extends StatefulWidget {
-  final List<AliFile> playlist;
+  final List<AliFile>? playlist;
+  final Room? room;
 
-  const WatchPage({Key? key, required this.playlist}) : super(key: key);
+  const WatchPage({Key? key, this.playlist, this.room})
+      : assert(playlist != null || room != null),
+        super(key: key);
 
   @override
   State<WatchPage> createState() => _WatchPageState();
@@ -22,7 +26,8 @@ class _WatchPageState extends State<WatchPage> {
   @override
   void initState() {
     super.initState();
-    controller.setPlayList(widget.playlist);
+
+    controller.init(widget.playlist, widget.room);
   }
 
   @override
@@ -34,7 +39,7 @@ class _WatchPageState extends State<WatchPage> {
 
   @override
   Widget build(BuildContext context) {
-    final Player player = Player(key: playerKey,controller: controller.player);
+    final Player player = Player(key: playerKey, controller: controller.player);
 
     return MultiProvider(
       providers: [
@@ -44,16 +49,17 @@ class _WatchPageState extends State<WatchPage> {
       child: Material(
         color: Colors.white,
         child: OrientationBuilder(builder: (context, Orientation orientation) {
-        if (orientation == Orientation.landscape) {
-          return player;
-        }
-        return Column(
-          children: [
-            player,
-            const Expanded(child: Interactive()),
-          ],
-        );
-      }),),
+          if (orientation == Orientation.landscape) {
+            return player;
+          }
+          return Column(
+            children: [
+              player,
+              const Expanded(child: Interactive()),
+            ],
+          );
+        }),
+      ),
     );
   }
 }

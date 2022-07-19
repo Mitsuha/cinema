@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hourglass/components/player/state.dart';
 import 'package:hourglass/page/watch/controller.dart';
 import 'package:provider/provider.dart';
 import 'package:hourglass/helpers.dart';
