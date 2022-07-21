@@ -27,15 +27,16 @@ class AliFile {
     required this.category,
     required this.thumbnail,
     required this.size,
+    this.playInfo,
     this.videoMetadata,
   });
 
   factory AliFile.formJson(json) => AliFile(
         size: json['size'] ?? 0,
-        driveID: json['drive_id'],
+        driveID: json['drive_id'] ?? '',
         fileID: json['file_id'],
         name: json['name'],
-        parentFileID: json['parent_file_id'],
+        parentFileID: json['parent_file_id'] ?? '',
         type: json['type'],
         createdAt: DateTime.parse(json['created_at']),
         updatedAt: json['updated_at'],
@@ -44,6 +45,7 @@ class AliFile {
             (json['category'] == null // is file?
                 ? 'https://img.alicdn.com/imgextra/i3/O1CN01qSxjg71RMTCxOfTdi_!!6000000002097-2-tps-80-80.png'
                 : 'https://img.alicdn.com/imgextra/i1/O1CN01mhaPJ21R0UC8s9oik_!!6000000002049-2-tps-80-80.png'),
+        playInfo: json['play_info'] == null ? null : PlayInfo.formJson(json['play_info']),
         videoMetadata: json['video_media_metadata'] == null
             ? null
             : VideoMetadata(
@@ -63,6 +65,21 @@ class AliFile {
 
     return this;
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'size': size,
+      'file_id': fileID,
+      'name': name,
+      'type': type,
+      'updated_at': updatedAt,
+      'category': category,
+      'thumbnail': thumbnail,
+      'created_at': createdAt.toString(),
+      'play_info': playInfo?.toJson(),
+      'video_media_metadata': videoMetadata?.toJson(),
+    };
+  }
 }
 
 class VideoMetadata {
@@ -70,4 +87,11 @@ class VideoMetadata {
   final int height;
 
   const VideoMetadata({required this.width, required this.height});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'width': width,
+      'height': height,
+    };
+  }
 }

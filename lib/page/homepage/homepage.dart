@@ -14,18 +14,27 @@ class Homepage extends StatefulWidget {
   State<Homepage> createState() => _HomepageState();
 }
 
-class _HomepageState extends State<Homepage> {
+class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
   final controller = HomepageController();
 
   @override
   void initState() {
     super.initState();
-
+    WidgetsBinding.instance.addObserver(this);
     controller.init();
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if(state == AppLifecycleState.resumed){
+      controller.onAppResumed(context);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    controller.onAppResumed(context);
+
     return MultiProvider(
       providers: [
         Provider<HomepageController>(create: (_) => controller),

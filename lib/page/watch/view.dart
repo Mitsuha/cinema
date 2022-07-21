@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hourglass/ali_driver/models/file.dart';
 import 'package:hourglass/components/player/player.dart';
 import 'package:hourglass/model/room.dart';
 import 'package:hourglass/page/watch/controller.dart';
@@ -8,12 +7,9 @@ import 'package:hourglass/page/watch/state.dart';
 import 'package:provider/provider.dart';
 
 class WatchPage extends StatefulWidget {
-  final List<AliFile>? playlist;
-  final Room? room;
+  final Room room;
 
-  const WatchPage({Key? key, this.playlist, this.room})
-      : assert(playlist != null || room != null),
-        super(key: key);
+  const WatchPage({Key? key,required this.room}) : super(key: key);
 
   @override
   State<WatchPage> createState() => _WatchPageState();
@@ -27,7 +23,7 @@ class _WatchPageState extends State<WatchPage> {
   void initState() {
     super.initState();
 
-    controller.init(widget.playlist, widget.room);
+    controller.init(widget.room);
   }
 
   @override

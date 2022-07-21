@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hourglass/model/room.dart';
+import 'package:hourglass/model/user.dart';
 
 class WatchState with ChangeNotifier {
-  Room room = Room(id: 0, users: []);
+  Room room = Room(id: 0, master: User.guest(), users: []);
 
   setRoom(Room r){
     room = r;

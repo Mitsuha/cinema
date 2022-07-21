@@ -117,4 +117,9 @@ class PlayerState with ChangeNotifier{
     notifyListeners();
   }
 
+  @override
+  void dispose() {
+    print('dispose');
+    super.dispose();
+  }
 }

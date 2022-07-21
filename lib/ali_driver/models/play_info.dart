@@ -12,12 +12,27 @@ class PlayInfo {
       required this.height,
       required this.subtitles});
 
+  factory PlayInfo.formApiResponse(json) => PlayInfo(
+      duration: json['meta']['duration'],
+      width: json['meta']['width'],
+      height: json['meta']['height'],
+      sources: [for (var s in json['live_transcoding_task_list']) Source.formApiResponse(s)].reversed.toList(),
+      subtitles: [for (var s in (json['live_transcoding_subtitle_task_list'] ?? [])) Subtitle.formJson(s)]);
+
+  factory PlayInfo.formJson(json) => PlayInfo(
+        duration: json['duration'],
+        width: json['width'],
+        height: json['height'],
+        sources: [for (var s in json['sources']) Source(url: s['url'], resolution: s['resolution'])],
+        subtitles: [],
+      );
+
   Source get currentPlay => sources.where((element) => element.current).first;
 
   Source useSource(Source s) {
     for (var element in sources) {
       element.current = false;
-      if(element.url == s.url){
+      if (element.url == s.url) {
         element.current = true;
       }
     }
@@ -28,24 +43,26 @@ class PlayInfo {
     return useSource(sources.first);
   }
 
-  Subtitle useSubtitle(Subtitle s){
+  Subtitle useSubtitle(Subtitle s) {
     for (var element in subtitles) {
       element.current = false;
-      if(element.url == s.url){
+      if (element.url == s.url) {
         element.current = true;
       }
     }
     return s;
   }
 
-  factory PlayInfo.formJson(json) => PlayInfo(
-      duration: json['meta']['duration'],
-      width: json['meta']['width'],
-      height: json['meta']['height'],
-      sources: [for (var s in json['live_transcoding_task_list']) Source(url: s['url'], resolution: s['template_id'])]
-          .reversed
-          .toList(),
-      subtitles: [for (var s in (json['live_transcoding_subtitle_task_list'] ?? [])) Subtitle.formJson(s)]);
+  Map<String, dynamic> toJson() {
+    return {
+      'duration': duration,
+      'width': width,
+      'height': height,
+      'sources': [
+        for (var s in sources) s.toJson(),
+      ],
+    };
+  }
 }
 
 class Source {
@@ -54,6 +71,10 @@ class Source {
   bool current = false;
 
   Source({required this.url, required this.resolution});
+
+  factory Source.formJson(json) => Source(url: json['language'], resolution: json['resolution']);
+
+  factory Source.formApiResponse(json) => Source(url: json['language'], resolution: json['template_id']);
 
   get resolutionSort =>
       {
@@ -72,6 +93,13 @@ class Source {
           "FHD": "1080P 高清",
         }[resolution] ??
         resolution;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'url': url,
+      'resolution': resolution,
+    };
   }
 }
 

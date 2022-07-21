@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hourglass/model/user.dart';
 import 'package:hourglass/page/welcome_page.dart';
 import 'package:provider/provider.dart';
 
@@ -20,10 +19,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: Provider<User>(
-        create: (_) => User.guest(),
-        child: const WelcomePage(),
-      ),
+      home: const WelcomePage(),
     );
   }
 }

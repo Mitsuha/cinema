@@ -9,6 +9,8 @@ class User with ChangeNotifier {
   int usedSize;
   bool guest;
 
+  static User? _auth;
+
   User({
     required this.id,
     required this.name,
@@ -35,6 +37,9 @@ class User with ChangeNotifier {
         "avatar": avatar,
       };
 
+  static User get auth => _auth!;
+  static set auth (User u) => _auth = u;
+
   factory User.fromJson(json) => User(
         id: json['user_id'] ?? json['id'],
         name: json['nick_name'] ?? json['name'],
@@ -55,4 +60,11 @@ class User with ChangeNotifier {
         usedSize: 0,
         guest: true,
       );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is User && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }

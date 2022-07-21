@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
-
-import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:hourglass/ali_driver/models/file.dart';
 import 'package:hourglass/basic.dart';
 import 'package:hourglass/model/room.dart';
 import 'package:hourglass/model/user.dart';
@@ -20,7 +18,7 @@ class Ws {
   bool registered = false;
   User? user;
   Room? room;
-  StreamController stream = StreamController<Map<String, dynamic>>.broadcast();
+  StreamController broadcast = StreamController<Map<String, dynamic>>.broadcast();
 
   static Ws connect() {
     return _instance ??= Ws._internal(_getWsConnect());
@@ -31,32 +29,17 @@ class Ws {
   }
 
   Ws._internal(this.channel) {
-    channel.stream.listen(distribution,
-        onError: (err) {
-          reconnect();
-        },
-        onDone: () => reconnect());
+    channel.stream.listen(distribution, onError: onError, onDone: onDone);
   }
 
   reconnect() {
-    if (connecting) {
-      return;
-    }
+    if (connecting) {return;}
 
     connecting = true;
     Fluttertoast.showToast(msg: '断线重连中...');
 
     Future.delayed(const Duration(seconds: 3)).then((_) {
-      channel = _getWsConnect()
-        ..stream.listen(distribution, onError: (err) {
-          if (kDebugMode) {
-            print('err');
-            print(err);
-          }
-          reconnect();
-        }, onDone: () {
-          reconnect();
-        });
+      channel = _getWsConnect()..stream.listen(distribution, onError: onError, onDone: onDone);
 
       if (user != null) {
         register(user!);
@@ -65,35 +48,26 @@ class Ws {
     });
   }
 
+  onError(err) {
+    print(err);
+    reconnect();
+  }
+
+  onDone() {
+    print('onDone');
+    reconnect();
+  }
+
   distribution(event) {
     print('distribution: $event');
-    stream.add(jsonDecode(event));
+    broadcast.add(jsonDecode(event));
   }
 
-  register(User user) {
-    this.user = user;
-    channel.sink.add(jsonEncode({
-      'event': 'register',
-      'payload': user.toJson()
-    }));
-  }
-
-  logout() {
-    user = null;
-    channel.sink.add(jsonEncode({
-      "event": "logout",
-    }));
-  }
-
-  Future<Map<String, dynamic>> request (String event, Map<String, dynamic> payload) async {
+  Future<Map<String, dynamic>> request(String event, payload) async {
     var id = const Uuid().v4().toString();
-    channel.sink.add(jsonEncode({
-      'event': event,
-      'id': id,
-      'payload': payload
-    }));
+    channel.sink.add(jsonEncode({'event': event, 'id': id, 'payload': payload}));
 
-    await for (var msg in stream.stream) {
+    await for (var msg in broadcast.stream) {
       if (msg['event'] == 'reply' && msg['id'] == id) {
         return msg;
       }
@@ -102,7 +76,29 @@ class Ws {
     return {};
   }
 
-  Future<Map<String, dynamic>> createRoom() async {
-    return request('createRoom', {});
+  Future<Map<String, dynamic>> createRoom(List<AliFile> playlist) async {
+    return request('createRoom', [for(var p in playlist) p.toJson()]);
+  }
+
+  register(User user) {
+    this.user = user;
+    channel.sink.add(jsonEncode({'event': 'register', 'payload': user.toJson()}));
+  }
+
+  logout() {
+    user = null;
+    channel.sink.add(jsonEncode({"event": "logout"}));
+  }
+
+  Future<Map<String, dynamic>> joinRoom(Room r){
+    room = room;
+    return request("joinRoom", r.toJson());
+  }
+
+  syncPlayList(List<AliFile> files) {
+    channel.sink.add(jsonEncode({
+      'event': 'syncPlayList',
+      'payload': [for (var f in files) f.toJson()]
+    }));
   }
 }
