@@ -1,15 +1,14 @@
 import 'package:hourglass/ali_driver/models/file.dart';
 
-typedef BoolCallback = bool Function();
-typedef VoidCallback = void Function();
-
 class PlayerListeners {
   bool Function(AliFile)? onSwitchEpisode;
-  VoidCallback? videoAlmostOver;
+  void Function()? videoAlmostOver;
+  bool Function(Duration)? onSeek;
 
   PlayerListeners({
     this.onSwitchEpisode,
     this.videoAlmostOver,
+    this.onSeek,
   });
 
   bool runOnSwitchEpisode(AliFile aliFile){
@@ -18,4 +17,12 @@ class PlayerListeners {
     }
     return true;
   }
+
+  bool runOnSeek(Duration duration){
+    if(onSeek != null){
+      return onSeek!(duration);
+    }
+    return true;
+  }
+
 }

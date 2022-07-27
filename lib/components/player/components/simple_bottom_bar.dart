@@ -31,17 +31,15 @@ class SimpleBottomBar extends StatelessWidget {
           ),
           Consumer<VideoPlayState>(builder: (context, state, _) {
             return Expanded(
-              child: Row(
-                  children: [
-                    Expanded(
-                      child: VideoProgressBar(),
-                    ),
-                    Text(
-                      "${controller.playerController?.value.duration.toVideoString() ?? '00:00'}/${state.playingDuration
-                          .toVideoString()}",
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ]),
+              child: Row(children: [
+                Expanded(
+                  child: controller.canControl ? VideoProgressBar() : const SizedBox(),
+                ),
+                Text(
+                  "${controller.playerController?.value.duration.toVideoString() ?? '00:00'}/${state.playingDuration.toVideoString()}",
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ]),
             );
           }),
           SizedBox(

@@ -117,6 +117,11 @@ class PlayerState with ChangeNotifier{
     notifyListeners();
   }
 
+  setState(void Function() callback){
+    callback();
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     print('dispose');

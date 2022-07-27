@@ -140,6 +140,8 @@ class HomepageController {
       if (response['success'] == false) {
         Fluttertoast.showToast(msg: response['payload']['message']);
       } else {
+        room.addUser(User.auth);
+
         Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) {
           return WatchPage(room: room);
         }));

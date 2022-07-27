@@ -29,13 +29,7 @@ class PlayerRibbon extends StatelessWidget {
             duration: const Duration(milliseconds: 300),
             child: Row(
               children: [
-                if (state.orientation == Orientation.portrait) const BackButton(color: Colors.white),
-                if (state.orientation == Orientation.landscape)
-                  IconButton(
-                    color: Colors.white,
-                    icon: const BackButtonIcon(),
-                    onPressed: controller.cancelFullScreen,
-                  ),
+                const BackButton(color: Colors.white),
                 Expanded(
                   child: Text(
                     state.currentEpisode?.name ?? '',

@@ -32,8 +32,20 @@ class Ws {
     channel.stream.listen(distribution, onError: onError, onDone: onDone);
   }
 
+  onError(err) {
+    print(err);
+    reconnect();
+  }
+
+  onDone() {
+    print('onDone');
+    reconnect();
+  }
+
   reconnect() {
-    if (connecting) {return;}
+    if (connecting) {
+      return;
+    }
 
     connecting = true;
     Fluttertoast.showToast(msg: '断线重连中...');
@@ -44,18 +56,11 @@ class Ws {
       if (user != null) {
         register(user!);
       }
+      if (room != null) {
+        joinRoom(room!);
+      }
       connecting = false;
     });
-  }
-
-  onError(err) {
-    print(err);
-    reconnect();
-  }
-
-  onDone() {
-    print('onDone');
-    reconnect();
   }
 
   distribution(event) {
@@ -77,7 +82,7 @@ class Ws {
   }
 
   Future<Map<String, dynamic>> createRoom(List<AliFile> playlist) async {
-    return request('createRoom', [for(var p in playlist) p.toJson()]);
+    return request('createRoom', [for (var p in playlist) p.toJson()]);
   }
 
   register(User user) {
@@ -90,15 +95,34 @@ class Ws {
     channel.sink.add(jsonEncode({"event": "logout"}));
   }
 
-  Future<Map<String, dynamic>> joinRoom(Room r){
+  Future<Map<String, dynamic>> joinRoom(Room r) {
     room = room;
     return request("joinRoom", r.toJson());
+  }
+
+  leaveRoom() {
+    room = null;
+    channel.sink.add(jsonEncode({"event": "leaveRoom"}));
   }
 
   syncPlayList(List<AliFile> files) {
     channel.sink.add(jsonEncode({
       'event': 'syncPlayList',
       'payload': [for (var f in files) f.toJson()]
+    }));
+  }
+
+  syncEpisode(int i) {
+    channel.sink.add(jsonEncode({
+      'event': 'syncEpisode',
+      'payload': {'index': i}
+    }));
+  }
+
+  syncDuration(Duration duration) {
+    channel.sink.add(jsonEncode({
+      'event': 'syncDuration',
+      'payload': {'duration': duration.inMilliseconds, 'time': DateTime.now().millisecondsSinceEpoch}
     }));
   }
 }

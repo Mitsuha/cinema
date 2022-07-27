@@ -54,8 +54,7 @@ class _PlayerState extends State<Player> {
                   Positioned.fill(
                     child: PlayerRibbon(),
                   ),
-                  if (orientation == Orientation.landscape)
-                    const PlayerMenu()
+                  if (orientation == Orientation.landscape) const PlayerMenu()
                 ],
               );
 

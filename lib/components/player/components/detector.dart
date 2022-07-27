@@ -12,9 +12,9 @@ class PlayerDetector extends StatelessWidget {
     return GestureDetector(
       onTap: controller.switchRibbon,
       onDoubleTap: controller.switchPlayStatus,
-      onHorizontalDragUpdate: controller.addFastForwardTo,
-      onHorizontalDragEnd: controller.doFastForward,
-      onHorizontalDragCancel: controller.onDetectorDone,
+      onHorizontalDragUpdate: controller.canControl ? controller.addFastForwardTo : null,
+      onHorizontalDragEnd: controller.canControl ? controller.doFastForward: null,
+      onHorizontalDragCancel: controller.canControl ? controller.onDetectorDone: null,
       onVerticalDragEnd: controller.addBrightOrVolumeDone,
       onVerticalDragCancel: controller.onDetectorDone,
       onVerticalDragUpdate: (DragUpdateDetails details) {

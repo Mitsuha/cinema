@@ -7,19 +7,49 @@ class Room {
   List<User> users;
   AliFile? currentPlay;
   List<AliFile>? playList;
+  int episode;
+  Duration duration;
 
-  Room({required this.id, required this.master, required this.users, this.currentPlay, this.playList});
+  Room({
+    required this.id,
+    required this.master,
+    required this.users,
+    required this.episode,
+    required this.duration,
+    this.currentPlay,
+    this.playList,
+  });
 
   factory Room.fromJson(json) => Room(
         id: json['id'],
+        episode: json['episode'],
         master: User.fromJson(json['master']),
+        duration: Duration(milliseconds: json['duration']),
         users: [for (var u in json['users']) User.fromJson(u)],
         currentPlay: json['currentPlay'] == null ? null : AliFile.formJson(json['id']),
         playList: [for (var p in (json['playlist'] ?? [])) AliFile.formJson(p)],
       );
 
+  // on join room
   Map<String, dynamic> toJson() => {
         'id': id,
         'master': master,
       };
+
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is Room && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+
+  addUser(User user){
+    for(var u in users){
+      if(u == user){
+        return;
+      }
+    }
+    users.add(user);
+  }
 }

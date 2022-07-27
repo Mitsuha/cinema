@@ -8,29 +8,33 @@ import 'package:hourglass/components/player/listeners.dart';
 import 'package:hourglass/model/room.dart';
 import 'package:hourglass/model/user.dart';
 import 'package:hourglass/page/watch/state.dart';
+import 'package:hourglass/page/watch/subscriber.dart';
 import 'package:hourglass/websocket/ws.dart';
 
 class WatchController {
-  late final PlayerController player = PlayerController(listeners: PlayerListeners(
-    onSwitchEpisode: onSwitchEpisode,
-  ));
+  late final PlayerController player = PlayerController(
+      canControl: state.room.master == User.auth,
+      listeners: PlayerListeners(
+        onSwitchEpisode: onSwitchEpisode,
+        onSeek: onSeekTo,
+      ));
 
   final WatchState state = WatchState();
-  StreamSubscription? streamSubscription;
+  RoomStreamSubscriber? subscriber;
+  BuildContext? context;
+  Timer? durationTimer;
 
   init(Room room) {
     setRoom(room);
 
-    streamSubscription = Ws.instance.broadcast.stream.listen((event) {
-      if (event['event'] == 'syncPlayList') {
-        onSyncPlayList(event['payload']);
-      }
-    });
+    subscriber = RoomStreamSubscriber(this, Ws.instance.broadcast.stream, state.room.master == User.auth);
   }
 
   dispose() async {
     await player.dispose();
-    streamSubscription?.cancel();
+    subscriber?.dispose();
+    durationTimer?.cancel();
+    Ws.instance.leaveRoom();
   }
 
   setRoom(Room room) {
@@ -39,22 +43,68 @@ class WatchController {
 
     if (room.playList != null) {
       setPlayList(room.playList!);
+      selectEpisode(room.episode);
     }
   }
 
-  onSyncPlayList(List payload) {
+  bool onSwitchEpisode(AliFile episode) {
     if (state.room.master == User.auth) {
-      return;
-    }
+      episode.loadPlayInfo().then((value) {
+        Ws.instance.syncEpisode(player.playList.indexOf(episode));
+        Ws.instance.syncPlayList(player.playList);
+      });
 
-    setPlayList([for (var p in payload) AliFile.formJson(p)]);
-  }
-
-  bool onSwitchEpisode(AliFile episode){
-    if(state.room.master == User.auth){
-      episode.loadPlayInfo().then((value) => Ws.instance.syncPlayList(state.room.playList!));
+      startSyncDuration();
     }
     return true;
+  }
+
+  bool onSeekTo(Duration duration){
+    if(state.room.master == User.auth){
+      Ws.instance.syncDuration(duration);
+    }
+    return true;
+  }
+
+  Future<bool> onWillPop(BuildContext context) async {
+    if (player.getState().orientation == Orientation.landscape) {
+      await player.cancelFullScreen();
+      return false;
+    }else{
+      bool back = false;
+      await showDialog(context: context, builder: (BuildContext dialogCtx){
+        return AlertDialog(
+          title: const Text("Wait..."),
+          content: const Text("确定要退出房间吗？"),
+          actions: [
+            TextButton(
+              child: const Text('取消', style: TextStyle(color: Colors.grey)),
+              onPressed: () {
+                Navigator.of(dialogCtx).pop();
+                back = false;
+              },
+            ),
+            TextButton(
+              child: const Text('确定'),
+              onPressed: () {
+                Navigator.of(dialogCtx).pop();
+                back = true;
+              },
+            ),
+          ],
+        );
+      });
+
+      return back;
+    }
+  }
+
+  startSyncDuration(){
+    durationTimer?.cancel();
+
+    durationTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      Ws.instance.syncDuration(player.position);
+    });
   }
 
   setPlayList(List<AliFile> playlist) {

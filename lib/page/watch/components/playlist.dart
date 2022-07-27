@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hourglass/basic.dart';
 import 'package:hourglass/page/watch/controller.dart';
 import 'package:provider/provider.dart';
 import 'package:hourglass/helpers.dart';
@@ -27,7 +28,11 @@ class WatchPlayList extends StatelessWidget {
             onTap: () => controller.selectEpisode(i),
             selected: current?.fileID == playlist[i].fileID,
             minVerticalPadding: 10,
-            leading: Image.network(playlist[i].thumbnail),
+            leading: Image.network(
+              playlist[i].thumbnail,
+              headers: Basic.originHeader,
+              errorBuilder: (_, __, ___) => Image.network(Basic.fullbackImage),
+            ),
             title: Text(playlist[i].name, softWrap: false, overflow: TextOverflow.fade),
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 10.0, right: 8),
@@ -35,7 +40,7 @@ class WatchPlayList extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(playlist[i].createdAt.diffForHuman(), style: const TextStyle(fontSize: 12)),
-                  Text(playlist[i].size.toByteString(),style: const TextStyle(fontSize: 12)),
+                  Text(playlist[i].size.toByteString(), style: const TextStyle(fontSize: 12)),
                 ],
               ),
             ),

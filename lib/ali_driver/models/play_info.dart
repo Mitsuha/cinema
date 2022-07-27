@@ -72,9 +72,9 @@ class Source {
 
   Source({required this.url, required this.resolution});
 
-  factory Source.formJson(json) => Source(url: json['language'], resolution: json['resolution']);
+  factory Source.formJson(json) => Source(url: json['url'], resolution: json['resolution']);
 
-  factory Source.formApiResponse(json) => Source(url: json['language'], resolution: json['template_id']);
+  factory Source.formApiResponse(json) => Source(url: json['url'], resolution: json['template_id']);
 
   get resolutionSort =>
       {

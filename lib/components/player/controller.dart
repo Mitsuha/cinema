@@ -8,6 +8,7 @@ import 'package:hourglass/ali_driver/models/play_info.dart';
 import 'package:hourglass/basic.dart';
 import 'package:hourglass/components/player/listeners.dart';
 import 'package:hourglass/components/player/state.dart';
+import 'package:hourglass/websocket/ws.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:video_player/video_player.dart';
@@ -20,6 +21,7 @@ class PlayerController {
   final VolumeController volumeController = VolumeController()..showSystemUI = false;
   final ScreenBrightness screenBrightness = ScreenBrightness();
   final ValueNotifier sliderValueNotifier = ValueNotifier(0.0);
+  final bool canControl;
   late final PlayerListeners listeners;
 
   StreamSubscription? sensorsStreamSubscription;
@@ -27,7 +29,7 @@ class PlayerController {
   double basicY = 0;
   double rotateY = 0;
 
-  PlayerController({PlayerListeners? listeners}) {
+  PlayerController({required this.canControl, PlayerListeners? listeners}) {
     this.listeners = listeners ?? PlayerListeners();
   }
 
@@ -47,6 +49,12 @@ class PlayerController {
   PlayerState getState() {
     return _state;
   }
+
+  List<AliFile> get playList => _state.playlist;
+
+  AliFile? get currentEpisode => _state.currentEpisode;
+
+  Duration get position => playerController?.value.position ?? Duration.zero;
 
   registerSensorsListener() {
     const sen = 3.6;
@@ -167,14 +175,6 @@ class PlayerController {
     }
   }
 
-  List<AliFile> get playList {
-    return _state.playlist;
-  }
-
-  AliFile? get currentEpisode {
-    return _state.currentEpisode;
-  }
-
   setPlaySpeed(double speed) {
     playerController?.setPlaybackSpeed(speed);
     _state.setVideoMenu(VideoMenu.none);
@@ -207,27 +207,36 @@ class PlayerController {
     _state.setRibbonVisibility(_state.ribbonShow);
   }
 
-  seekTo(int seconds) {
+  seekTo(Duration duration) {
     if (playerController == null) {
       return;
     }
+    if(listeners.runOnSeek(duration)){
+      playerController!.seekTo(duration);
+      if (! playerController!.value.isPlaying) {
+        playerController!.play();
+      }
+    }
+  }
 
-    playerController!.seekTo(Duration(seconds: seconds));
+  speedTo(Duration duration){
+    seekTo(duration);
   }
 
   addFastForwardTo(DragUpdateDetails details) {
     if (playerController == null) {
       return;
     }
-    int second = _state.fastForwardTo == Duration.zero
-        ? playerController!.value.position.inSeconds
-        : _state.fastForwardTo.inSeconds;
+    int millisecond = _state.fastForwardTo == Duration.zero
+        ? playerController!.value.position.inMilliseconds
+        : _state.fastForwardTo.inMilliseconds;
 
-    _state.setFastForwardTo(Duration(seconds: second + (details.delta.dx * 3).toInt()));
+    _state.setFastForwardTo(Duration(milliseconds: millisecond + (details.delta.dx * 10).toInt()));
   }
 
   doFastForward(DragEndDetails _) {
-    playerController?.seekTo(_state.fastForwardTo);
+    seekTo(_state.fastForwardTo);
+
     _state.setFastForwardTo(Duration.zero);
   }
 
@@ -274,10 +283,11 @@ class PlayerController {
   }
 
   onDetectorDone() {
-    _state.volumeUpdating = false;
-    _state.brightUpdating = false;
-    _state.fastForwardTo = Duration.zero;
-    _state.notifyListeners();
+    _state.setState(() {
+      _state.volumeUpdating = false;
+      _state.brightUpdating = false;
+      _state.fastForwardTo = Duration.zero;
+    });
   }
 
   fullScreen() {
@@ -291,11 +301,15 @@ class PlayerController {
     registerSensorsListener();
   }
 
-  cancelFullScreen() {
-    SystemChrome.setPreferredOrientations([
+  Future<void> cancelFullScreen() async {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp, //全屏时旋转方向，左边
     ]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _state.deviceOrientation = DeviceOrientation.portraitUp;
+    sensorsStreamSubscription?.cancel();
+    print('cancelFullScreen');
+    return;
   }
 
   showPlayList() {

@@ -80,6 +80,13 @@ class AliFile {
       'video_media_metadata': videoMetadata?.toJson(),
     };
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is AliFile && runtimeType == other.runtimeType && fileID == other.fileID;
+
+  @override
+  int get hashCode => fileID.hashCode;
 }
 
 class VideoMetadata {
