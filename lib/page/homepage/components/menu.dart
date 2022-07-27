@@ -27,13 +27,16 @@ class HomepageMenu extends StatelessWidget {
           ),
         ),
       ),
-      CardItem(
-        icon: Transform.translate(
-          offset: const Offset(-5, 0),
-          child: Image.asset('assets/images/get_in.png', width: iconSize),
+      GestureDetector(
+        onTap: () => controller.onAppResumed(context),
+        child: CardItem(
+          icon: Transform.translate(
+            offset: const Offset(-5, 0),
+            child: Image.asset('assets/images/get_in.png', width: iconSize),
+          ),
+          title: '加入',
+          subtitle: '已经创建好了房间？选这里',
         ),
-        title: '加入',
-        subtitle: '已经创建好了房间？选这里',
       ),
       CardItem(
         icon: Transform.translate(

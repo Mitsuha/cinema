@@ -24,39 +24,49 @@ class AliPersistence with ChangeNotifier {
 
   static AliPersistence? _instance;
 
-  static AliPersistence init() {
-    return _instance ??= AliPersistence._internal();
-  }
-
   static AliPersistence get instance => _instance!;
 
+  static Future<AliPersistence> init() async {
+    if(_instance != null){
+      return _instance!;
+    }
+
+    _instance = AliPersistence._internal();
+
+    var sharedPreferences = await SharedPreferences.getInstance();
+
+    String? dbJson = sharedPreferences.getString('DB');
+    if (dbJson == null) {
+      instance.initState = AliDriverInitState.fail;
+      instance.notifyListeners();
+      return instance;
+    }
+    var json = jsonDecode(dbJson);
+
+    if (json['refreshToken'] == '') {
+      instance.initState = AliDriverInitState.fail;
+      instance.notifyListeners();
+      return instance;
+    }
+
+    instance.accessToken = json['accessToken'];
+    instance.refreshToken = json['refreshToken'];
+    instance.rootDriver = json['rootDriver'];
+
+    await AliDriver.refreshToken();
+
+    instance.initState = AliDriverInitState.initialed;
+    instance.notifyListeners();
+
+    return instance;
+  }
+
   AliPersistence._internal() {
-    SharedPreferences.getInstance().then((SharedPreferences sharedPreferences) async {
-      String? db = sharedPreferences.getString('DB');
-      if (db == null) {
-        initState = AliDriverInitState.fail;
-        notifyListeners();
-        return;
+    Timer.periodic(const Duration(minutes: 30), (_) {
+      if (initState == AliDriverInitState.initialed) {
+        AliDriver.refreshToken();
       }
-      var json = jsonDecode(db);
-
-      if (json['refreshToken'] == '') {
-        initState = AliDriverInitState.fail;
-        notifyListeners();
-        return;
-      }
-
-      accessToken = json['accessToken'];
-      refreshToken = json['refreshToken'];
-      rootDriver = json['rootDriver'];
-
-      await AliDriver.refreshToken();
-
-      initState = AliDriverInitState.initialed;
-      notifyListeners();
     });
-
-    Timer.periodic(const Duration(minutes: 30), (t) => AliDriver.refreshToken());
   }
 
   clearLoginStatus() {

@@ -83,9 +83,9 @@ class Skeleton extends StatelessWidget {
               shape: shape ?? BoxShape.rectangle,
               gradient: LinearGradient(
                 begin: const Alignment(-2, .5),
-                end: const Alignment(1, 1),
-                colors: const [Color(0x08000000), Color(0x10000000), Color(0x08000000)],
-                stops: [stop, stop + 0.3, stop + 0.6],
+                end: const Alignment(1, 2),
+                colors: const [Color(0xFFededed), Color(0xFFf4f4f4), Color(0xFFededed)],
+                stops: [stop, stop + 0.2, stop + 0.4],
               ),
             ),
           ),

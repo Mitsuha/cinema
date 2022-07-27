@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hourglass/basic.dart';
 import 'package:hourglass/page/homepage/components/profile_skeleton.dart';
 import 'package:hourglass/page/homepage/state.dart';
 import 'package:provider/provider.dart';
@@ -26,7 +27,7 @@ class UserProfile extends StatelessWidget {
               CircleAvatar(
                 radius: 30,
                 backgroundColor: Colors.white,
-                backgroundImage: NetworkImage(state.user.avatar),
+                backgroundImage: NetworkImage(state.user.avatar, headers: Basic.originHeader),
               ),
               const SizedBox(height: 5),
               Text(state.user.name, style: const TextStyle(fontSize: 15)),

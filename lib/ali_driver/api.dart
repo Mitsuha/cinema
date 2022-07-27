@@ -45,7 +45,7 @@ class AliDriver {
       "url_expire_sec": 14400
     });
 
-    return PlayInfo.formJson(response.body['video_preview_play_info']);
+    return PlayInfo.formApiResponse(response.body['video_preview_play_info']);
   }
 
   static downloadUrl(String fileID) {

@@ -38,7 +38,7 @@ class VideoProgressBar extends StatelessWidget {
             onChangeStart: (_) => dragging = true,
             onChangeEnd: (newValue) {
               dragging = false;
-              controller.seekTo(newValue.toInt());
+              controller.seekTo(Duration(seconds: newValue.toInt()));
             },
           ),
         );

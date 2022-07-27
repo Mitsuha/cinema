@@ -6,7 +6,9 @@ import 'package:hourglass/ali_driver/api.dart';
 import 'package:hourglass/ali_driver/models/file.dart';
 import 'package:hourglass/ali_driver/models/play_info.dart';
 import 'package:hourglass/basic.dart';
+import 'package:hourglass/components/player/listeners.dart';
 import 'package:hourglass/components/player/state.dart';
+import 'package:hourglass/websocket/ws.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:video_player/video_player.dart';
@@ -14,32 +16,45 @@ import 'package:volume_controller/volume_controller.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class PlayerController {
-  final PlayerState state = PlayerState();
+  final PlayerState _state = PlayerState();
   final VideoPlayState videoPlayState = VideoPlayState();
-  final VolumeController volumeController = VolumeController()
-    ..showSystemUI = false;
+  final VolumeController volumeController = VolumeController()..showSystemUI = false;
   final ScreenBrightness screenBrightness = ScreenBrightness();
   final ValueNotifier sliderValueNotifier = ValueNotifier(0.0);
+  final bool canControl;
+  late final PlayerListeners listeners;
 
   StreamSubscription? sensorsStreamSubscription;
   VideoPlayerController? playerController;
   double basicY = 0;
   double rotateY = 0;
 
-  PlayerController();
+  PlayerController({required this.canControl, PlayerListeners? listeners}) {
+    this.listeners = listeners ?? PlayerListeners();
+  }
 
   initState() {
     volumeController.listener((v) {
-      if (!state.volumeUpdating) {
-        return state.setVolumeValue(v);
+      if (!_state.volumeUpdating) {
+        return _state.setVolumeValue(v);
       }
     });
     screenBrightness.onCurrentBrightnessChanged.listen((v) {
-      if (!state.volumeUpdating) {
-        state.setBrightValue(v);
+      if (!_state.volumeUpdating) {
+        _state.setBrightValue(v);
       }
     });
   }
+
+  PlayerState getState() {
+    return _state;
+  }
+
+  List<AliFile> get playList => _state.playlist;
+
+  AliFile? get currentEpisode => _state.currentEpisode;
+
+  Duration get position => playerController?.value.position ?? Duration.zero;
 
   registerSensorsListener() {
     const sen = 3.6;
@@ -50,60 +65,63 @@ class PlayerController {
       rotateY += event.y;
 
       if ((rotateY - basicY).abs() > 8) {
-        if (state.deviceOrientation == DeviceOrientation.landscapeRight) {
+        if (_state.deviceOrientation == DeviceOrientation.landscapeRight) {
           rotateY = basicY + sen;
-        } else if (state.deviceOrientation == DeviceOrientation.landscapeLeft) {
+        } else if (_state.deviceOrientation == DeviceOrientation.landscapeLeft) {
           rotateY = basicY - sen;
         }
       }
 
-      if (rotateY - basicY < -sen && state.deviceOrientation == DeviceOrientation.landscapeRight) {
+      if (rotateY - basicY < -sen && _state.deviceOrientation == DeviceOrientation.landscapeRight) {
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.landscapeLeft, //全屏时旋转方向，左边
         ]);
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-        state.deviceOrientation = DeviceOrientation.landscapeLeft;
+        _state.deviceOrientation = DeviceOrientation.landscapeLeft;
       }
-      if (rotateY - basicY > sen && state.deviceOrientation == DeviceOrientation.landscapeLeft) {
+      if (rotateY - basicY > sen && _state.deviceOrientation == DeviceOrientation.landscapeLeft) {
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.landscapeRight, //全屏时旋转方向，左边
         ]);
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-        state.deviceOrientation = DeviceOrientation.landscapeRight;
+        _state.deviceOrientation = DeviceOrientation.landscapeRight;
       }
     });
   }
 
   selectEpisode(int i) async {
-    AliFile episode = state.playlist[i];
+    AliFile episode = _state.playlist[i];
+
+    if (!listeners.runOnSwitchEpisode(episode)) {
+      return;
+    }
 
     if (!episode.playInfoLoaded) {
       await episode.loadPlayInfo();
     }
-    state.setCurrentEpisode(episode);
+    _state.setCurrentEpisode(episode);
 
     _loadNewVideo(episode.playInfo!.useTheBast());
 
     switchPlayStatus();
 
-    if ((episode.videoMetadata?.width ?? 0) >= 1080) {
-      loadOriginVideo(episode).then((_) {
-        if (episode.videoMetadata!.height != 1080) {
-          Fluttertoast.showToast(msg: '本视频可选原画画质');
-        }
-      });
-    }
+    // if ((episode.videoMetadata?.width ?? 0) >= 1080) {
+    //   loadOriginVideo(episode).then((_) {
+    //     if (episode.videoMetadata!.height != 1080) {
+    //       Fluttertoast.showToast(msg: '本视频可选原画画质');
+    //     }
+    //   });
+    // }
   }
 
-  switchSubtitle(Subtitle subtitle){
+  switchSubtitle(Subtitle subtitle) {
     if (playerController == null) {
       return;
     }
 
-    if (state.currentEpisode?.playInfo?.useSubtitle(subtitle) == null) {
+    if (_state.currentEpisode?.playInfo?.useSubtitle(subtitle) == null) {
       return;
     }
-
   }
 
   switchResolution(Source source) async {
@@ -113,7 +131,7 @@ class PlayerController {
 
     var position = playerController!.value.position;
 
-    if (state.currentEpisode?.playInfo?.useSource(source) == null) {
+    if (_state.currentEpisode?.playInfo?.useSource(source) == null) {
       return;
     }
 
@@ -125,18 +143,18 @@ class PlayerController {
   _loadNewVideo(Source source) async {
     playerController?.dispose();
     playerController = null;
-    state.setVideoControllerInitialing(true);
+    _state.setVideoControllerInitialing(true);
 
-    try{
+    try {
       playerController = VideoPlayerController.network(
         source.url,
         httpHeaders: Basic.originHeader,
         videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true, allowBackgroundPlayback: true),
       );
-    }catch(e){
+    } catch (e) {
       Fluttertoast.showToast(msg: '视频加载失败，建议返回重进');
 
-      state.setVideoControllerInitialing(false);
+      _state.setVideoControllerInitialing(false);
       return;
     }
 
@@ -146,22 +164,20 @@ class PlayerController {
 
     await playerController!.initialize();
 
-    state.setVideoControllerInitialing(false);
+    _state.setVideoControllerInitialing(false);
   }
 
-  setPlayList(List<AliFile> playlist) {
-    state.playlist = playlist;
+  setPlayList(List<AliFile> playlist, {bool autoplay = false}) {
+    _state.playlist = playlist;
 
-    selectEpisode(0);
-  }
-
-  List<AliFile> get playList {
-    return state.playlist;
+    if (autoplay) {
+      selectEpisode(0);
+    }
   }
 
   setPlaySpeed(double speed) {
     playerController?.setPlaybackSpeed(speed);
-    state.setVideoMenu(VideoMenu.none);
+    _state.setVideoMenu(VideoMenu.none);
   }
 
   switchPlayStatus() async {
@@ -169,101 +185,109 @@ class PlayerController {
       return;
     }
 
-    playerController!.value.isPlaying
-        ? await playerController!.pause()
-        : await playerController!.play();
+    playerController!.value.isPlaying ? await playerController!.pause() : await playerController!.play();
 
-    state.setPlayStatus(playerController!.value.isPlaying);
+    _state.setPlayStatus(playerController!.value.isPlaying);
   }
 
   switchRibbon() {
-    if (state.videoMenu != VideoMenu.none) {
-      state.setVideoMenu(VideoMenu.none);
+    if (_state.videoMenu != VideoMenu.none) {
+      _state.setVideoMenu(VideoMenu.none);
       return;
     }
 
-    if (state.ribbonShow == false) {
-      state.ribbonVisibility = true;
+    if (_state.ribbonShow == false) {
+      _state.ribbonVisibility = true;
     }
 
-    state.setRibbonShow(!state.ribbonShow);
+    _state.setRibbonShow(!_state.ribbonShow);
   }
 
   updateRibbonVisibility() {
-    state.setRibbonVisibility(state.ribbonShow);
+    _state.setRibbonVisibility(_state.ribbonShow);
   }
 
-  seekTo(int seconds) {
+  seekTo(Duration duration) {
     if (playerController == null) {
       return;
     }
+    if(listeners.runOnSeek(duration)){
+      playerController!.seekTo(duration);
+      if (! playerController!.value.isPlaying) {
+        playerController!.play();
+      }
+    }
+  }
 
-    playerController!.seekTo(Duration(seconds: seconds));
+  speedTo(Duration duration){
+    seekTo(duration);
   }
 
   addFastForwardTo(DragUpdateDetails details) {
     if (playerController == null) {
       return;
     }
-    int second = state.fastForwardTo == Duration.zero
-        ? playerController!.value.position.inSeconds
-        : state.fastForwardTo.inSeconds;
+    int millisecond = _state.fastForwardTo == Duration.zero
+        ? playerController!.value.position.inMilliseconds
+        : _state.fastForwardTo.inMilliseconds;
 
-    state.setFastForwardTo(Duration(seconds: second + (details.delta.dx * 3).toInt()));
+    _state.setFastForwardTo(Duration(milliseconds: millisecond + (details.delta.dx * 10).toInt()));
   }
 
   doFastForward(DragEndDetails _) {
-    playerController?.seekTo(state.fastForwardTo);
-    state.setFastForwardTo(Duration.zero);
+    seekTo(_state.fastForwardTo);
+
+    _state.setFastForwardTo(Duration.zero);
   }
 
   addBright(DragUpdateDetails details) {
-    var bright = state.brightValue;
+    var bright = _state.brightValue;
 
     if (details.delta.dy == 0) {
       return;
     }
-    if (!state.brightUpdating) {
-      state.setBrightUpdating(true);
+    if (!_state.brightUpdating) {
+      _state.setBrightUpdating(true);
     }
 
     bright -= (details.delta.dy / 100);
     bright = max(min(bright, 1.0), 0);
 
     screenBrightness.setScreenBrightness(bright);
-    state.setBrightValue(bright);
+    _state.setBrightValue(bright);
   }
 
   addVolume(DragUpdateDetails details) async {
-    var volume = state.volumeValue;
+    var volume = _state.volumeValue;
 
     if (details.delta.dy == 0) {
       return;
     }
-    if (!state.volumeUpdating) {
-      state.setVolumeUpdating(true);
+    if (!_state.volumeUpdating) {
+      _state.setVolumeUpdating(true);
     }
 
     volume -= (details.delta.dy / 100);
     volume = max(min(volume, 1.0), 0);
 
     volumeController.setVolume(volume);
-    state.setVolumeValue(volume);
+    _state.setVolumeValue(volume);
   }
 
   addBrightOrVolumeDone(DragEndDetails _) {
-    if (state.volumeUpdating) {
-      state.setVolumeUpdating(false);
-    } else if (state.brightUpdating) {
-      state.setBrightUpdating(false);
+    if (_state.volumeUpdating) {
+      _state.setVolumeUpdating(false);
+    } else if (_state.brightUpdating) {
+      _state.setBrightUpdating(false);
     }
   }
 
   onDetectorDone() {
-    state.volumeUpdating = false;
-    state.brightUpdating = false;
-    state.fastForwardTo = Duration.zero;
-    state.notifyListeners();
+    _state.setState(() {
+      _state.volumeUpdating = false;
+      _state.brightUpdating = false;
+      _state.fastForwardTo = Duration.zero;
+    });
   }
 
   fullScreen() {
@@ -273,39 +297,43 @@ class PlayerController {
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-    state.deviceOrientation = DeviceOrientation.landscapeLeft;
+    _state.deviceOrientation = DeviceOrientation.landscapeLeft;
     registerSensorsListener();
   }
 
-  cancelFullScreen() {
-    SystemChrome.setPreferredOrientations([
+  Future<void> cancelFullScreen() async {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp, //全屏时旋转方向，左边
     ]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _state.deviceOrientation = DeviceOrientation.portraitUp;
+    sensorsStreamSubscription?.cancel();
+    print('cancelFullScreen');
+    return;
   }
 
   showPlayList() {
-    state.ribbonShow = false;
-    state.ribbonVisibility = false;
-    state.setVideoMenu(VideoMenu.playList);
+    _state.ribbonShow = false;
+    _state.ribbonVisibility = false;
+    _state.setVideoMenu(VideoMenu.playList);
   }
 
   showResolution() {
-    state.ribbonShow = false;
-    state.ribbonVisibility = false;
-    state.setVideoMenu(VideoMenu.resolution);
+    _state.ribbonShow = false;
+    _state.ribbonVisibility = false;
+    _state.setVideoMenu(VideoMenu.resolution);
   }
 
   showSpeed() {
-    state.ribbonShow = false;
-    state.ribbonVisibility = false;
-    state.setVideoMenu(VideoMenu.speed);
+    _state.ribbonShow = false;
+    _state.ribbonVisibility = false;
+    _state.setVideoMenu(VideoMenu.speed);
   }
 
   showSubtitle() {
-    state.ribbonShow = false;
-    state.ribbonVisibility = false;
-    state.setVideoMenu(VideoMenu.subtitle);
+    _state.ribbonShow = false;
+    _state.ribbonVisibility = false;
+    _state.setVideoMenu(VideoMenu.subtitle);
   }
 
   Future<void> loadOriginVideo(AliFile file) async {
@@ -321,12 +349,12 @@ class PlayerController {
     var response = await AliDriver.downloadUrl(file.fileID);
     var meta = file.videoMetadata!;
 
-    file.playInfo!.sources.insert(
-        0, Source(url: response.body['cdn_url'], resolution: "${meta.width}x${meta.height} 原画"));
+    file.playInfo!.sources
+        .insert(0, Source(url: response.body['cdn_url'], resolution: "${meta.width}x${meta.height} 原画"));
   }
 
-  void dispose() {
-    playerController?.dispose();
+  Future dispose() async {
+    await playerController?.dispose();
     sliderValueNotifier.dispose();
     volumeController.removeListener();
     sensorsStreamSubscription?.cancel();

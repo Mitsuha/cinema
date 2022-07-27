@@ -34,7 +34,9 @@ class Interactive extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: TabBarView(children: [
+            child: TabBarView(
+            physics: BouncingScrollPhysics(),
+                children: [
               WatchChat(),
               WatchPlayList(),
             ]),

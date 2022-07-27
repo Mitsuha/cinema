@@ -32,11 +32,11 @@ extension DateTimeToString on DateTime{
 extension IntToString on int{
   String toByteString(){
     var a = toDouble();
-    for (var element in ['KB', 'MB', 'GB']) {
+    for (var element in ['KB', 'MB', 'GB', 'TB', 'PB']) {
       if (a / 1024 > 1024) {
         a = a / 1024;
       }else{
-        return a.toInt().toString() + element;
+        return (a / 1024).toStringAsFixed(2) + element;
       }
     }
     return toString();
