@@ -9,6 +9,8 @@ class Room {
   List<AliFile>? playList;
   int episode;
   Duration duration;
+  double speed;
+  bool isPlaying;
 
   Room({
     required this.id,
@@ -16,6 +18,8 @@ class Room {
     required this.users,
     required this.episode,
     required this.duration,
+    required this.speed,
+    required this.isPlaying,
     this.currentPlay,
     this.playList,
   });
@@ -23,6 +27,8 @@ class Room {
   factory Room.fromJson(json) => Room(
         id: json['id'],
         episode: json['episode'],
+        speed: (json['speed'] as int).toDouble(),
+        isPlaying: json['is_playing'] ?? true,
         master: User.fromJson(json['master']),
         duration: Duration(milliseconds: json['duration']),
         users: [for (var u in json['users']) User.fromJson(u)],
@@ -36,7 +42,6 @@ class Room {
         'master': master,
       };
 
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) || other is Room && runtimeType == other.runtimeType && id == other.id;
@@ -44,9 +49,9 @@ class Room {
   @override
   int get hashCode => id.hashCode;
 
-  addUser(User user){
-    for(var u in users){
-      if(u == user){
+  addUser(User user) {
+    for (var u in users) {
+      if (u == user) {
         return;
       }
     }

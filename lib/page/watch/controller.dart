@@ -15,8 +15,10 @@ class WatchController {
   late final PlayerController player = PlayerController(
       canControl: state.room.master == User.auth,
       listeners: PlayerListeners(
-        onSwitchEpisode: onSwitchEpisode,
-        onSeek: onSeekTo,
+          onSwitchEpisode: onSwitchEpisode,
+          onSeek: onSeekTo,
+          onPause: onPause,
+          onPlay: onPlay,
       ));
 
   final WatchState state = WatchState();
@@ -43,7 +45,12 @@ class WatchController {
 
     if (room.playList != null) {
       setPlayList(room.playList!);
-      selectEpisode(room.episode);
+      selectEpisode(room.episode).then((_) {
+        player.seekTo(room.duration);
+        if (room.speed != 1) {
+          player.playerController?.setPlaybackSpeed(room.speed);
+        }
+      });
     }
   }
 
@@ -59,20 +66,26 @@ class WatchController {
     return true;
   }
 
-  bool onSeekTo(Duration duration){
-    if(state.room.master == User.auth){
+  bool onSeekTo(Duration duration) {
+    if (state.room.master == User.auth) {
       Ws.instance.syncDuration(duration);
     }
     return true;
   }
 
+  void onPause() => Ws.instance.syncPlayingStatus(false);
+
+  void onPlay() => Ws.instance.syncPlayingStatus(true);
+
   Future<bool> onWillPop(BuildContext context) async {
-    if (player.getState().orientation == Orientation.landscape) {
+    if (player
+        .getState()
+        .orientation == Orientation.landscape) {
       await player.cancelFullScreen();
       return false;
-    }else{
+    } else {
       bool back = false;
-      await showDialog(context: context, builder: (BuildContext dialogCtx){
+      await showDialog(context: context, builder: (BuildContext dialogCtx) {
         return AlertDialog(
           title: const Text("Wait..."),
           content: const Text("确定要退出房间吗？"),
@@ -99,7 +112,7 @@ class WatchController {
     }
   }
 
-  startSyncDuration(){
+  startSyncDuration() {
     durationTimer?.cancel();
 
     durationTimer = Timer.periodic(const Duration(seconds: 10), (_) {
@@ -117,8 +130,9 @@ class WatchController {
     player.setPlayList(playlist);
   }
 
-  selectEpisode(i) {
-    state.setState(() => player.selectEpisode(i));
+  Future<void> selectEpisode(i) async {
+    await player.selectEpisode(i);
+    state.setState(() {});
   }
 
   invitationPopup(BuildContext context) {

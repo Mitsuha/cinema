@@ -33,7 +33,7 @@ class SimpleBottomBar extends StatelessWidget {
             return Expanded(
               child: Row(children: [
                 Expanded(
-                  child: controller.canControl ? VideoProgressBar() : const SizedBox(),
+                  child: controller.canControl ? const VideoProgressBar() : const SizedBox(),
                 ),
                 Text(
                   "${controller.playerController?.value.duration.toVideoString() ?? '00:00'}/${state.playingDuration.toVideoString()}",

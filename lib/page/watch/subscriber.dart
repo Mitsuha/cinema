@@ -41,6 +41,9 @@ class RoomStreamSubscriber {
         break;
       case "syncDuration":
         onSyncDuration(event['payload']);
+        break;
+      case "syncPlayingStatus":
+        onSyncPlayingStatus(event['payload']);
     }
   }
 
@@ -60,30 +63,41 @@ class RoomStreamSubscriber {
     if (!imNotBlack) {
       var diff = (duration['duration'] - _controller.player.position.inMilliseconds) as int;
       if (diff.abs() > 1000) {
-        var delay = DateTime.now().millisecondsSinceEpoch -
-            duration['time'] +
-            (diff > 5 * Duration.millisecondsPerMinute ? 20 : 5);
+        var target = Duration(milliseconds: duration['duration'] + 3);
+        var speed = _controller.state.room.speed * 2;
 
-        _controller.player.speedTo(Duration(milliseconds: duration['duration'] + delay));
+        if ((target.inMinutes - _controller.player.playerController!.value.position.inMinutes).abs() >= 5) {}
+
+        _controller.player.speedTo(speed, _controller.state.room.speed, target);
       }
     }
   }
 
-  onJoinRoom(Map<String, dynamic> u){
+  onSyncPlayingStatus(Map<String, dynamic> payload) {
+    if (!imNotBlack) {
+      if (payload['playing']) {
+        _controller.player.playerController?.play();
+      } else {
+        _controller.player.playerController?.pause();
+      }
+    }
+  }
+
+  onJoinRoom(Map<String, dynamic> u) {
     var user = User.fromJson(u);
 
     _controller.state.addUser(user);
   }
 
-  onLeaveRoom(Map<String, dynamic> u){
+  onLeaveRoom(Map<String, dynamic> u) {
     var user = User.fromJson(u);
 
     _controller.state.removeUser(user);
   }
 
-  onDismiss(Map<String, dynamic> r){
+  onDismiss(Map<String, dynamic> r) {
     var room = Room.fromJson(r);
-    if(room == _controller.state.room){
+    if (room == _controller.state.room) {
       _controller.player.cancelFullScreen();
 
       Navigator.of(_controller.context!).pop();

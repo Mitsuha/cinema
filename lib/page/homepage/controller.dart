@@ -100,7 +100,7 @@ class HomepageController {
 
         var response = await Ws.instance.request('roomInfo', {'id': int.parse(text)});
 
-        if (!response['success']) {
+        if (response["payload"]['success'] == false) {
           Fluttertoast.showToast(msg: response['payload']['message']);
           return;
         }
@@ -137,7 +137,7 @@ class HomepageController {
 
   joinRoom(BuildContext context, Room room) {
     Ws.instance.joinRoom(room).then((response) {
-      if (response['success'] == false) {
+      if (response['payload']['success'] == false) {
         Fluttertoast.showToast(msg: response['payload']['message']);
       } else {
         room.addUser(User.auth);

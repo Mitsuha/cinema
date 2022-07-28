@@ -8,7 +8,6 @@ import 'package:hourglass/ali_driver/models/play_info.dart';
 import 'package:hourglass/basic.dart';
 import 'package:hourglass/components/player/listeners.dart';
 import 'package:hourglass/components/player/state.dart';
-import 'package:hourglass/websocket/ws.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:video_player/video_player.dart';
@@ -20,7 +19,6 @@ class PlayerController {
   final VideoPlayState videoPlayState = VideoPlayState();
   final VolumeController volumeController = VolumeController()..showSystemUI = false;
   final ScreenBrightness screenBrightness = ScreenBrightness();
-  final ValueNotifier sliderValueNotifier = ValueNotifier(0.0);
   final bool canControl;
   late final PlayerListeners listeners;
 
@@ -28,6 +26,7 @@ class PlayerController {
   VideoPlayerController? playerController;
   double basicY = 0;
   double rotateY = 0;
+  Timer? speedTimer;
 
   PlayerController({required this.canControl, PlayerListeners? listeners}) {
     this.listeners = listeners ?? PlayerListeners();
@@ -89,7 +88,7 @@ class PlayerController {
     });
   }
 
-  selectEpisode(int i) async {
+  Future<void> selectEpisode(int i) async {
     AliFile episode = _state.playlist[i];
 
     if (!listeners.runOnSwitchEpisode(episode)) {
@@ -101,9 +100,9 @@ class PlayerController {
     }
     _state.setCurrentEpisode(episode);
 
-    _loadNewVideo(episode.playInfo!.useTheBast());
+    await _loadNewVideo(episode.playInfo!.useTheBast());
 
-    switchPlayStatus();
+    await switchPlayStatus();
 
     // if ((episode.videoMetadata?.width ?? 0) >= 1080) {
     //   loadOriginVideo(episode).then((_) {
@@ -185,7 +184,13 @@ class PlayerController {
       return;
     }
 
-    playerController!.value.isPlaying ? await playerController!.pause() : await playerController!.play();
+    if(playerController!.value.isPlaying){
+      await playerController!.pause();
+      listeners.runOnPause();
+    }else{
+      await playerController!.play();
+      listeners.runOnPlay();
+    }
 
     _state.setPlayStatus(playerController!.value.isPlaying);
   }
@@ -212,15 +217,35 @@ class PlayerController {
       return;
     }
     if(listeners.runOnSeek(duration)){
+      speedTimer?.cancel();
       playerController!.seekTo(duration);
+
       if (! playerController!.value.isPlaying) {
         playerController!.play();
       }
     }
   }
 
-  speedTo(Duration duration){
-    seekTo(duration);
+  speedTo(double speed,double targetSpeed, Duration target){
+    if(playerController == null){
+      return;
+    }
+    Duration current = playerController!.value.position;
+    if(current > target){
+      seekTo(target);
+      return;
+    }
+
+    var speedDuration = Duration(microseconds: (current - target).inMicroseconds.abs() ~/ (speed - targetSpeed));
+    if(current + speedDuration > playerController!.value.duration){
+      seekTo(target);
+    }
+
+    playerController!.setPlaybackSpeed(speed);
+    speedTimer?.cancel();
+    speedTimer = Timer(Duration(microseconds: (current - target).inMicroseconds.abs() ~/ (speed - targetSpeed)), () {
+      playerController?.setPlaybackSpeed(targetSpeed);
+    });
   }
 
   addFastForwardTo(DragUpdateDetails details) {
@@ -308,7 +333,6 @@ class PlayerController {
     ]);
     _state.deviceOrientation = DeviceOrientation.portraitUp;
     sensorsStreamSubscription?.cancel();
-    print('cancelFullScreen');
     return;
   }
 
@@ -355,7 +379,6 @@ class PlayerController {
 
   Future dispose() async {
     await playerController?.dispose();
-    sliderValueNotifier.dispose();
     volumeController.removeListener();
     sensorsStreamSubscription?.cancel();
   }

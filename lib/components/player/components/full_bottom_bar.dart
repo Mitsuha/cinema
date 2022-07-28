@@ -19,7 +19,7 @@ class FullBottomBar extends StatelessWidget {
           Consumer<VideoPlayState>(builder: (context, state, _) {
             return Row(children: [
               Text(state.playingDuration.toVideoString(), style: const TextStyle(fontSize: 12)),
-              Expanded(child: VideoProgressBar()),
+              const Expanded(child: VideoProgressBar()),
               Text(
                 controller.playerController?.value.duration.toVideoString() ?? '00:00',
                 style: const TextStyle(fontSize: 12),

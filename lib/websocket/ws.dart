@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hourglass/ali_driver/models/file.dart';
 import 'package:hourglass/basic.dart';
@@ -32,15 +33,9 @@ class Ws {
     channel.stream.listen(distribution, onError: onError, onDone: onDone);
   }
 
-  onError(err) {
-    print(err);
-    reconnect();
-  }
+  onError(err) => reconnect();
 
-  onDone() {
-    print('onDone');
-    reconnect();
-  }
+  onDone() => reconnect();
 
   reconnect() {
     if (connecting) {
@@ -64,7 +59,9 @@ class Ws {
   }
 
   distribution(event) {
-    print('distribution: $event');
+    if (kDebugMode) {
+      print('distribution: $event');
+    }
     broadcast.add(jsonDecode(event));
   }
 
@@ -123,6 +120,13 @@ class Ws {
     channel.sink.add(jsonEncode({
       'event': 'syncDuration',
       'payload': {'duration': duration.inMilliseconds, 'time': DateTime.now().millisecondsSinceEpoch}
+    }));
+  }
+
+  syncPlayingStatus(bool status){
+    channel.sink.add(jsonEncode({
+      'event': 'syncPlayStatus',
+      'payload': {'playing': status}
     }));
   }
 }

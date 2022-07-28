@@ -23,8 +23,7 @@ class Request {
 
     _initializationRequest(request);
 
-    var response = await request.close();
-
+    await request.close();
   }
 
   Future<Response> post(String url, {Map<String, dynamic> ?data}) async {

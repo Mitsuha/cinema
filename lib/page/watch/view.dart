@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hourglass/components/player/player.dart';
 import 'package:hourglass/model/room.dart';
-import 'package:hourglass/model/user.dart';
 import 'package:hourglass/page/watch/controller.dart';
 import 'package:hourglass/page/watch/interactive.dart';
 import 'package:hourglass/page/watch/state.dart';
