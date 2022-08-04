@@ -33,7 +33,7 @@ class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    controller.onAppResumed(context);
+    // controller.onAppResumed(context);
 
     return MultiProvider(
       providers: [

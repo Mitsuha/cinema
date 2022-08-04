@@ -44,6 +44,9 @@ class RoomStreamSubscriber {
         break;
       case "syncPlayingStatus":
         onSyncPlayingStatus(event['payload']);
+        break;
+      case "syncSpeed":
+        syncSpeed(event['payload']);
     }
   }
 
@@ -80,6 +83,12 @@ class RoomStreamSubscriber {
       } else {
         _controller.player.playerController?.pause();
       }
+    }
+  }
+
+  syncSpeed(Map<String, dynamic> payload) {
+    if (!imNotBlack) {
+      _controller.player.playerController?.setPlaybackSpeed(payload['speed']);
     }
   }
 

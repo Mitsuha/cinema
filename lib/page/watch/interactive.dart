@@ -13,30 +13,26 @@ class Interactive extends StatelessWidget {
       child: Column(
         children: const [
           DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFD6D6D6), width: .2))
-            ),
+            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFD6D6D6), width: .2))),
             child: Align(
               alignment: Alignment.centerLeft,
               child: SizedBox(
                 width: 130,
                 height: 30,
                 child: TabBar(
-                  labelColor: Colors.black,
+                    labelColor: Colors.black,
                     padding: EdgeInsets.zero,
                     labelPadding: EdgeInsets.zero,
                     indicatorSize: TabBarIndicatorSize.label,
                     tabs: [
-                  Tab(child: Text('聊天')),
-                  Tab(child: Text('播放列表')),
-                ]),
+                      Tab(child: Text('聊天')),
+                      Tab(child: Text('播放列表')),
+                    ]),
               ),
             ),
           ),
           Expanded(
-            child: TabBarView(
-            physics: BouncingScrollPhysics(),
-                children: [
+            child: TabBarView(children: [
               WatchChat(),
               WatchPlayList(),
             ]),

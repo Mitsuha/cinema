@@ -16,6 +16,7 @@ class WatchController {
       canControl: state.room.master == User.auth,
       listeners: PlayerListeners(
           onSwitchEpisode: onSwitchEpisode,
+          onChangeSpeed: onChangeSpeed,
           onSeek: onSeekTo,
           onPause: onPause,
           onPlay: onPlay,
@@ -73,9 +74,24 @@ class WatchController {
     return true;
   }
 
-  void onPause() => Ws.instance.syncPlayingStatus(false);
+  void onPause() {
+    if (state.room.master == User.auth) {
+      Ws.instance.syncPlayingStatus(false);
+    }
+  }
 
-  void onPlay() => Ws.instance.syncPlayingStatus(true);
+  void onPlay() {
+    if (state.room.master == User.auth) {
+      Ws.instance.syncPlayingStatus(true);
+    }
+  }
+
+  bool onChangeSpeed(double speed){
+    if (state.room.master == User.auth) {
+      Ws.instance.syncSpeed(speed);
+    }
+    return true;
+  }
 
   Future<bool> onWillPop(BuildContext context) async {
     if (player

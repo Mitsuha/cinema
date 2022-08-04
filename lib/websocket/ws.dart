@@ -123,10 +123,17 @@ class Ws {
     }));
   }
 
-  syncPlayingStatus(bool status){
+  syncPlayingStatus(bool status) {
     channel.sink.add(jsonEncode({
-      'event': 'syncPlayStatus',
+      'event': 'syncPlayingStatus',
       'payload': {'playing': status}
+    }));
+  }
+
+  syncSpeed(double speed) {
+    channel.sink.add(jsonEncode({
+      'event': 'syncSpeed',
+      'payload': {'speed': speed}
     }));
   }
 }

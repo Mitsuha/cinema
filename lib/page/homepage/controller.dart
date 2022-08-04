@@ -81,6 +81,10 @@ class HomepageController {
   }
 
   goToPlay(BuildContext context, List<AliFile> videos) {
+    if(Ws.connecting){
+      Fluttertoast.showToast(msg: '与服务器断开连接，无法创建房间');
+      return;
+    }
     Ws.instance.createRoom(videos).then((value) {
       var room = Room.fromJson(value['payload']);
 

@@ -34,6 +34,30 @@ class _WatchPageState extends State<WatchPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    print('change');
+
+    /// 只更新和 Keyboard 相关的参数
+    // if(MediaQuery.of(context).viewInsets.bottom != 0){
+    //   state.systemKeyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    //   state.hasAnyKeyboardShow.value = true;
+    //   state.systemKeyboardOnShow.value = true;
+    //
+    //   // 食言了家人们，还得在这儿更新
+    //   state.activeSoftKeyboard.value = ActiveSoftKeyboard.none;
+    // }else{
+    //   // 系统键盘被收起
+    //   state.systemKeyboardOnShow.value = false;
+    //
+    //   if (state.activeSoftKeyboard.value == ActiveSoftKeyboard.none) {
+    //     state.hasAnyKeyboardShow.value = false;
+    //   }
+    // }
+  }
+
+  @override
   Widget build(BuildContext context) {
     controller.context = context;
     final Player player = Player(

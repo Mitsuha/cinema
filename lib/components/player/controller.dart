@@ -175,8 +175,10 @@ class PlayerController {
   }
 
   setPlaySpeed(double speed) {
-    playerController?.setPlaybackSpeed(speed);
-    _state.setVideoMenu(VideoMenu.none);
+    if (listeners.runOnChangeSpeed(speed)) {
+      playerController?.setPlaybackSpeed(speed);
+      _state.setVideoMenu(VideoMenu.none);
+    }
   }
 
   switchPlayStatus() async {
@@ -184,10 +186,10 @@ class PlayerController {
       return;
     }
 
-    if(playerController!.value.isPlaying){
+    if (playerController!.value.isPlaying) {
       await playerController!.pause();
       listeners.runOnPause();
-    }else{
+    } else {
       await playerController!.play();
       listeners.runOnPlay();
     }
@@ -216,28 +218,31 @@ class PlayerController {
     if (playerController == null) {
       return;
     }
-    if(listeners.runOnSeek(duration)){
+    if (listeners.runOnSeek(duration)) {
       speedTimer?.cancel();
+
       playerController!.seekTo(duration);
 
-      if (! playerController!.value.isPlaying) {
+      if (!playerController!.value.isPlaying) {
         playerController!.play();
       }
     }
   }
 
-  speedTo(double speed,double targetSpeed, Duration target){
-    if(playerController == null){
+  speedTo(double speed, double targetSpeed, Duration target) {
+    if (playerController == null) {
       return;
     }
     Duration current = playerController!.value.position;
-    if(current > target){
+    if (current > target) {
+      playerController!.setPlaybackSpeed(targetSpeed);
+
       seekTo(target);
       return;
     }
 
     var speedDuration = Duration(microseconds: (current - target).inMicroseconds.abs() ~/ (speed - targetSpeed));
-    if(current + speedDuration > playerController!.value.duration){
+    if (current + speedDuration > playerController!.value.duration) {
       seekTo(target);
     }
 
@@ -256,7 +261,7 @@ class PlayerController {
         ? playerController!.value.position.inMilliseconds
         : _state.fastForwardTo.inMilliseconds;
 
-    _state.setFastForwardTo(Duration(milliseconds: millisecond + (details.delta.dx * 10).toInt()));
+    _state.setFastForwardTo(Duration(milliseconds: millisecond + (details.delta.dx * 100).toInt()));
   }
 
   doFastForward(DragEndDetails _) {

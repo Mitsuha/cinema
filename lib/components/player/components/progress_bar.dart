@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controller.dart';
+import '../state.dart';
 
 class VideoProgressBar extends StatefulWidget {
 
-  const VideoProgressBar({Key? key}) : super(key: key);
+  // ignore: prefer_const_constructors_in_immutables
+  VideoProgressBar({Key? key}) : super(key: key);
 
   @override
   State<VideoProgressBar> createState() => _VideoProgressBarState();
