@@ -26,7 +26,7 @@ class AliDriver {
     return files;
   }
 
-  static refreshToken() async {
+  static Future<void> refreshToken() async {
     var response = await _request.post('/token/refresh', data: {
       "refresh_token": AliPersistence.instance.refreshToken,
     });

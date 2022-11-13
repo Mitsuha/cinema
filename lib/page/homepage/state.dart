@@ -10,7 +10,6 @@ class HomepageState with ChangeNotifier {
 
   /// file selector show
   bool fileSelectorShow = false;
-  bool fileSelectorVisible = false;
 
   setUser(User u){
     user = u;
@@ -20,11 +19,6 @@ class HomepageState with ChangeNotifier {
 
   setFileSelectorShow(bool show){
     fileSelectorShow = show;
-    notifyListeners();
-  }
-
-  setFileSelectorVisible(bool visible){
-    fileSelectorVisible = visible;
     notifyListeners();
   }
 

@@ -15,11 +15,11 @@ class WatchController {
   late final PlayerController player = PlayerController(
       canControl: state.room.master == User.auth,
       listeners: PlayerListeners(
-          onSwitchEpisode: onSwitchEpisode,
-          onChangeSpeed: onChangeSpeed,
-          onSeek: onSeekTo,
-          onPause: onPause,
-          onPlay: onPlay,
+        onSwitchEpisode: onSwitchEpisode,
+        onChangeSpeed: onChangeSpeed,
+        onSeek: onSeekTo,
+        onPause: onPause,
+        onPlay: onPlay,
       ));
 
   final WatchState state = WatchState();
@@ -30,7 +30,8 @@ class WatchController {
   init(Room room) {
     setRoom(room);
 
-    subscriber = RoomStreamSubscriber(this, Ws.instance.broadcast.stream, state.room.master == User.auth);
+    subscriber =
+        RoomStreamSubscriber(this, Ws.instance.broadcast.stream, state.room.master == User.auth);
   }
 
   dispose() async {
@@ -74,19 +75,27 @@ class WatchController {
     return true;
   }
 
-  void onPause() {
+  bool onPause() {
     if (state.room.master == User.auth) {
       Ws.instance.syncPlayingStatus(false);
+      return true;
+    } else {
+      player.sendNotification(const Text('你不是房主无法操作进度条'), const Duration(seconds: 1));
+      return false;
     }
   }
 
-  void onPlay() {
+  bool onPlay() {
     if (state.room.master == User.auth) {
       Ws.instance.syncPlayingStatus(true);
+      return true;
+    } else {
+      player.sendNotification(const Text('你不是房主无法操作进度条'), const Duration(seconds: 1));
+      return false;
     }
   }
 
-  bool onChangeSpeed(double speed){
+  bool onChangeSpeed(double speed) {
     if (state.room.master == User.auth) {
       Ws.instance.syncSpeed(speed);
     }
@@ -94,35 +103,35 @@ class WatchController {
   }
 
   Future<bool> onWillPop(BuildContext context) async {
-    if (player
-        .getState()
-        .orientation == Orientation.landscape) {
+    if (player.getState().orientation == Orientation.landscape) {
       await player.cancelFullScreen();
       return false;
     } else {
       bool back = false;
-      await showDialog(context: context, builder: (BuildContext dialogCtx) {
-        return AlertDialog(
-          title: const Text("Wait..."),
-          content: const Text("确定要退出房间吗？"),
-          actions: [
-            TextButton(
-              child: const Text('取消', style: TextStyle(color: Colors.grey)),
-              onPressed: () {
-                Navigator.of(dialogCtx).pop();
-                back = false;
-              },
-            ),
-            TextButton(
-              child: const Text('确定'),
-              onPressed: () {
-                Navigator.of(dialogCtx).pop();
-                back = true;
-              },
-            ),
-          ],
-        );
-      });
+      await showDialog(
+          context: context,
+          builder: (BuildContext dialogCtx) {
+            return AlertDialog(
+              title: const Text("Wait..."),
+              content: const Text("确定要退出房间吗？"),
+              actions: [
+                TextButton(
+                  child: const Text('取消', style: TextStyle(color: Colors.grey)),
+                  onPressed: () {
+                    Navigator.of(dialogCtx).pop();
+                    back = false;
+                  },
+                ),
+                TextButton(
+                  child: const Text('确定'),
+                  onPressed: () {
+                    Navigator.of(dialogCtx).pop();
+                    back = true;
+                  },
+                ),
+              ],
+            );
+          });
 
       return back;
     }
@@ -147,8 +156,9 @@ class WatchController {
   }
 
   Future<void> selectEpisode(i) async {
-    await player.selectEpisode(i);
-    state.setState(() {});
+    state.setState(() async {
+      await player.selectEpisode(i);
+    });
   }
 
   invitationPopup(BuildContext context) {

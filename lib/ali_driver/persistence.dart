@@ -26,37 +26,38 @@ class AliPersistence with ChangeNotifier {
 
   static AliPersistence get instance => _instance!;
 
-  static Future<AliPersistence> init() async {
-    if(_instance != null){
-      return _instance!;
+  static AliPersistence init() {
+    if (_instance != null) {
+      return instance;
     }
 
     _instance = AliPersistence._internal();
 
-    var sharedPreferences = await SharedPreferences.getInstance();
+    SharedPreferences.getInstance().then((sharedPreferences) {
+      String? dbJson = sharedPreferences.getString('DB');
+      if (dbJson == null) {
+        instance.initState = AliDriverInitState.fail;
+        instance.notifyListeners();
+        return instance;
+      }
+      var json = jsonDecode(dbJson);
 
-    String? dbJson = sharedPreferences.getString('DB');
-    if (dbJson == null) {
-      instance.initState = AliDriverInitState.fail;
-      instance.notifyListeners();
-      return instance;
-    }
-    var json = jsonDecode(dbJson);
+      if (json['refreshToken'] == '') {
+        instance.initState = AliDriverInitState.fail;
+        instance.notifyListeners();
+        return instance;
+      }
 
-    if (json['refreshToken'] == '') {
-      instance.initState = AliDriverInitState.fail;
-      instance.notifyListeners();
-      return instance;
-    }
+      instance.accessToken = json['accessToken'];
+      instance.refreshToken = json['refreshToken'];
+      instance.rootDriver = json['rootDriver'];
 
-    instance.accessToken = json['accessToken'];
-    instance.refreshToken = json['refreshToken'];
-    instance.rootDriver = json['rootDriver'];
+      AliDriver.refreshToken().then((_) {
+        instance.initState = AliDriverInitState.initialed;
 
-    await AliDriver.refreshToken();
-
-    instance.initState = AliDriverInitState.initialed;
-    instance.notifyListeners();
+        instance.notifyListeners();
+      });
+    });
 
     return instance;
   }

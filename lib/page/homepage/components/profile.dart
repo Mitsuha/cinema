@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hourglass/ali_driver/persistence.dart';
 import 'package:hourglass/basic.dart';
 import 'package:hourglass/page/homepage/components/profile_skeleton.dart';
 import 'package:hourglass/page/homepage/state.dart';
@@ -12,22 +13,24 @@ class UserProfile extends StatelessWidget {
   Widget build(BuildContext context) {
     final HomepageState state = context.watch<HomepageState>();
 
-    if (! state.userInitial){
+    if (!state.userInitial) {
       return const UserProfileSkeleton();
     }
 
     return Card(
-      color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Center(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.max,
             children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.white,
-                backgroundImage: NetworkImage(state.user.avatar, headers: Basic.originHeader),
+              GestureDetector(
+                onLongPress: () => showDialog(context: context, builder: buildLogoutDialog),
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.white,
+                  backgroundImage: NetworkImage(state.user.avatar, headers: Basic.originHeader),
+                ),
               ),
               const SizedBox(height: 5),
               Text(state.user.name, style: const TextStyle(fontSize: 15)),
@@ -60,6 +63,26 @@ class UserProfile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget buildLogoutDialog(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Wait...'),
+      content: const Text('要退出当前账号吗？'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('取消', style: TextStyle(color: Colors.grey)),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            AliPersistence.instance.clearLoginStatus();
+          },
+          child: const Text('退出'),
+        ),
+      ],
     );
   }
 }

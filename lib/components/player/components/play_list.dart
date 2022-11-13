@@ -27,7 +27,7 @@ class VideoPlayList extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 2),
                 child: InkWell(
                   radius: 6,
-                  onTap: () => controller.selectEpisode(i),
+                  onTap: controller.canControl ? () => controller.selectEpisode(i) : null,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       border: active

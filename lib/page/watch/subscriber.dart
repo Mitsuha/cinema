@@ -5,6 +5,7 @@ import 'package:hourglass/ali_driver/models/file.dart';
 import 'package:hourglass/model/room.dart';
 import 'package:hourglass/model/user.dart';
 import 'package:hourglass/page/watch/controller.dart';
+import 'package:hourglass/helpers.dart';
 
 class RoomStreamSubscriber {
   final WatchController _controller;
@@ -23,30 +24,20 @@ class RoomStreamSubscriber {
   }
 
   distribution(event) {
-    switch (event['event']) {
-      case "joinRoom":
-        onJoinRoom(event['payload']);
-        break;
-      case "leaveRoom":
-        onLeaveRoom(event['payload']);
-        break;
-      case "dismiss":
-        onDismiss(event['payload']);
-        break;
-      case "syncPlayList":
-        onSyncPlayList(event['payload']);
-        break;
-      case "syncEpisode":
-        onSyncEpisode(event['payload']);
-        break;
-      case "syncDuration":
-        onSyncDuration(event['payload']);
-        break;
-      case "syncPlayingStatus":
-        onSyncPlayingStatus(event['payload']);
-        break;
-      case "syncSpeed":
-        syncSpeed(event['payload']);
+    Map<String, Function> map = {
+      "joinRoom": onJoinRoom,
+      "leaveRoom": onLeaveRoom,
+      "dismiss": onDismiss,
+      "dismissCurrent": onDismissCurrent,
+      "syncPlayList": onSyncPlayList,
+      "syncEpisode": onSyncEpisode,
+      "syncDuration": onSyncDuration,
+      "syncPlayingStatus": onSyncPlayingStatus,
+      "syncSpeed": syncSpeed,
+    };
+
+    if (map[event['event']] != null) {
+      map[event['event']]!(event['payload']);
     }
   }
 
@@ -65,13 +56,17 @@ class RoomStreamSubscriber {
   onSyncDuration(Map<String, dynamic> duration) {
     if (!imNotBlack) {
       var diff = (duration['duration'] - _controller.player.position.inMilliseconds) as int;
-      if (diff.abs() > 1000) {
+      if (diff.abs() > 100) {
         var target = Duration(milliseconds: duration['duration'] + 3);
-        var speed = _controller.state.room.speed * 2;
+        // var speed = _controller.state.room.speed * 2;
 
-        if ((target.inMinutes - _controller.player.playerController!.value.position.inMinutes).abs() >= 5) {}
-
-        _controller.player.speedTo(speed, _controller.state.room.speed, target);
+        // if ((target.inMinutes - _controller.player.position.inMinutes).abs() >= 2) {
+        //   _controller.player.seekTo(target);
+        // }
+        _controller.player.seekTo(target);
+        _controller.player
+            .sendNotification(Text('房主快进到了：${target.toVideoString()}'), const Duration(seconds: 1));
+        // _controller.player.speedTo(speed, _controller.state.room.speed, target);
       }
     }
   }
@@ -79,9 +74,12 @@ class RoomStreamSubscriber {
   onSyncPlayingStatus(Map<String, dynamic> payload) {
     if (!imNotBlack) {
       if (payload['playing']) {
-        _controller.player.playerController?.play();
+        _controller.player.play();
+
+        _controller.player.sendNotification(const Text('房间开始播放'), const Duration(seconds: 1));
       } else {
-        _controller.player.playerController?.pause();
+        _controller.player.pause();
+        _controller.player.sendNotification(const Text('房间暂时停止了播放'), const Duration(seconds: 1));
       }
     }
   }
@@ -89,6 +87,8 @@ class RoomStreamSubscriber {
   syncSpeed(Map<String, dynamic> payload) {
     if (!imNotBlack) {
       _controller.player.playerController?.setPlaybackSpeed(payload['speed']);
+      _controller.player
+          .sendNotification(Text('房间调整到了${payload['speed']}倍速'), const Duration(seconds: 1));
     }
   }
 
@@ -96,6 +96,7 @@ class RoomStreamSubscriber {
     var user = User.fromJson(u);
 
     _controller.state.addUser(user);
+    _controller.player.sendNotification(Text('${user.name}已加入房间'), const Duration(seconds: 1));
   }
 
   onLeaveRoom(Map<String, dynamic> u) {
@@ -107,11 +108,15 @@ class RoomStreamSubscriber {
   onDismiss(Map<String, dynamic> r) {
     var room = Room.fromJson(r);
     if (room == _controller.state.room) {
-      _controller.player.cancelFullScreen();
-
-      Navigator.of(_controller.context!).pop();
-
-      Fluttertoast.showToast(msg: '房间已被解散');
+      onDismissCurrent(null);
     }
+  }
+
+  onDismissCurrent(_) {
+    _controller.player.cancelFullScreen();
+
+    Navigator.of(_controller.context!).pop();
+
+    Fluttertoast.showToast(msg: '房间已被解散');
   }
 }

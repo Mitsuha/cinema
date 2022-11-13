@@ -45,7 +45,7 @@ class Ws {
     connecting = true;
     Fluttertoast.showToast(msg: '断线重连中...');
 
-    Future.delayed(const Duration(seconds: 3)).then((_) {
+    Future.delayed(const Duration(seconds: 1)).then((_) {
       channel = _getWsConnect()..stream.listen(distribution, onError: onError, onDone: onDone);
 
       if (user != null) {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hourglass/basic.dart';
+import 'package:hourglass/model/user.dart';
 import 'package:hourglass/page/watch/controller.dart';
 import 'package:provider/provider.dart';
 import 'package:hourglass/helpers.dart';
@@ -11,7 +13,7 @@ class WatchPlayList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var controller = context.read<WatchController>();
-    var _ = context.watch<WatchState>();
+    var state = context.watch<WatchState>();
 
     var playlist = controller.player.playList;
     var current = controller.player.currentEpisode;
@@ -25,7 +27,13 @@ class WatchPlayList extends StatelessWidget {
             return IconButton(onPressed: () {}, icon: const Icon(Icons.add));
           }
           return ListTile(
-            onTap: () => controller.selectEpisode(i),
+            onTap: () {
+              if(state.room.master != User.auth){
+                Fluttertoast.showToast(msg: '你不是房主无法选集');
+              }else{
+                controller.selectEpisode(i);
+              }
+            },
             selected: current?.fileID == playlist[i].fileID,
             minVerticalPadding: 10,
             leading: Image.network(

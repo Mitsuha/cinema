@@ -49,8 +49,8 @@ class AliFile {
         videoMetadata: json['video_media_metadata'] == null
             ? null
             : VideoMetadata(
-                width: json['video_media_metadata']['width'],
-                height: json['video_media_metadata']['height'],
+                width: json['video_media_metadata']['width'] ?? 1920,
+                height: json['video_media_metadata']['height'] ?? 1080,
               ),
       );
 

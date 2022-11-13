@@ -5,8 +5,8 @@ class PlayerListeners {
   void Function()? videoAlmostOver;
   bool Function(Duration)? onSeek;
   bool Function(double)? onChangeSpeed;
-  void Function()? onPause;
-  void Function()? onPlay;
+  bool Function()? onPause;
+  bool Function()? onPlay;
 
   PlayerListeners({
     this.onSwitchEpisode,
@@ -38,15 +38,17 @@ class PlayerListeners {
     return true;
   }
 
-  void runOnPause(){
+  bool runOnPause(){
     if(onPause != null){
-      onPause!();
+      return onPause!();
     }
+    return true;
   }
-  void runOnPlay(){
+  bool runOnPlay(){
     if(onPlay != null){
-      onPlay!();
+      return onPlay!();
     }
+    return true;
   }
 
 }

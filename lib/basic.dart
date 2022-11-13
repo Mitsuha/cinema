@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+
 class Basic {
   static const originHeader = <String, String>{
     'referer': 'https://www.aliyundrive.com/',
@@ -10,7 +13,17 @@ class Basic {
   static const fullbackImage =
       'https://img.alicdn.com/imgextra/i2/O1CN01ROG7du1aV18hZukHC_!!6000000003334-2-tps-140-140.png';
 
-  static const remoteAddress = 'ws://192.168.8.30:3096/ws';
+  static String get remoteAddress {
+    // return 'ws://39.106.38.232:3096/ws';
+
+    if(kReleaseMode){
+      return 'ws://39.106.38.232:3096/ws';
+    }
+    if(Platform.localeName == "zh_CN"){
+      return "ws://172.29.240.209:3096/ws";
+    }
+    return "ws://192.168.124.12:3096/ws";
+  }
 
   static const animationDuration = Duration(milliseconds: 150);
 }

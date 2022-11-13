@@ -19,24 +19,24 @@ class SelectSpeed extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           TextButton(
+            onPressed: controller.canControl ? () => controller.setPlaySpeed(1): null,
             child: Text('1x', style: speed == 1 ? active : normal),
-            onPressed: () => controller.setPlaySpeed(1),
           ),
           TextButton(
+            onPressed: controller.canControl ? () => controller.setPlaySpeed(1.25): null,
             child: Text('1.25x', style: speed == 1.25 ? active : normal),
-            onPressed: () => controller.setPlaySpeed(1.25),
           ),
           TextButton(
+            onPressed: controller.canControl ? () => controller.setPlaySpeed(1.5): null,
             child: Text('1.5x', style: speed == 1.5 ? active : normal),
-            onPressed: () => controller.setPlaySpeed(1.5),
           ),
           TextButton(
+            onPressed: controller.canControl ? () => controller.setPlaySpeed(2): null,
             child: Text('2x', style: speed == 2 ? active : normal),
-            onPressed: () => controller.setPlaySpeed(2),
           ),
           TextButton(
-            child: Text('3x', style: speed == 3 ? active : normal),
-            onPressed: () => controller.setPlaySpeed(3),
+            onPressed: controller.canControl ? () => controller.setPlaySpeed(2.5): null,
+            child: Text('3x', style: speed == 2.5 ? active : normal),
           ),
         ],
       ),

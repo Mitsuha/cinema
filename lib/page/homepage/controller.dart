@@ -47,7 +47,6 @@ class HomepageController {
   }
 
   showFileSelector() {
-    state.fileSelectorVisible = true;
     state.setFileSelectorShow(true);
   }
 
@@ -81,34 +80,44 @@ class HomepageController {
   }
 
   goToPlay(BuildContext context, List<AliFile> videos) {
-    if(Ws.connecting){
+    if (Ws.connecting) {
       Fluttertoast.showToast(msg: '与服务器断开连接，无法创建房间');
       return;
     }
+
     Ws.instance.createRoom(videos).then((value) {
       var room = Room.fromJson(value['payload']);
 
-      Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => WatchPage(room: room)));
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (BuildContext context) => WatchPage(room: room)));
     });
   }
 
   onAppResumed(BuildContext context) {
     Clipboard.getData('text/plain').then((data) async {
-      // String text = (data?.text ?? '');
-      String text = '嗨👋，我正在看 Stranger.Things.S04E01。快来 Hourglass 分享我的进度条，房间号：# 21066 #';
+      String text = (data?.text ?? '');
+
+      if(text == ''){
+        return;
+      }
 
       try {
         RegExp regExp = RegExp(r'\#[0-9\s]*?\#');
 
         text = (regExp.allMatches(text).first.group(0)!).replaceAll('#', '').trim();
 
-        var response = await Ws.instance.request('roomInfo', {'id': int.parse(text)});
+        var room = await getRoomInfo(int.parse(text));
 
-        if (response["payload"]['success'] == false) {
-          Fluttertoast.showToast(msg: response['payload']['message']);
+        if(room == null){
+          Fluttertoast.showToast(msg: '房间不存在');
           return;
         }
-        var room = Room.fromJson(response['payload']);
+
+        if(room.master == User.auth){
+          return;
+        }
+
+        Clipboard.setData(const ClipboardData(text: ''));
 
         showDialog(
           context: context,
@@ -137,6 +146,15 @@ class HomepageController {
         return;
       }
     });
+  }
+
+  Future<Room?> getRoomInfo(int roomID) async {
+    var response = await Ws.instance.request('roomInfo', {'id': roomID});
+
+    if (response['success'] == false) {
+      return null;
+    }
+    return Room.fromJson(response['payload']);
   }
 
   joinRoom(BuildContext context, Room room) {

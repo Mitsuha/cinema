@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +14,7 @@ import 'package:sensors_plus/sensors_plus.dart';
 import 'package:video_player/video_player.dart';
 import 'package:volume_controller/volume_controller.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:wakelock/wakelock.dart';
 
 class PlayerController {
   final PlayerState _state = PlayerState();
@@ -54,6 +56,8 @@ class PlayerController {
   AliFile? get currentEpisode => _state.currentEpisode;
 
   Duration get position => playerController?.value.position ?? Duration.zero;
+
+  bool get isPlaying => _state.playing;
 
   registerSensorsListener() {
     const sen = 3.6;
@@ -102,7 +106,7 @@ class PlayerController {
 
     await _loadNewVideo(episode.playInfo!.useTheBast());
 
-    await switchPlayStatus();
+    await play();
 
     // if ((episode.videoMetadata?.width ?? 0) >= 1080) {
     //   loadOriginVideo(episode).then((_) {
@@ -181,20 +185,19 @@ class PlayerController {
     }
   }
 
+  /// 用户点击播放按钮触发的事件
   switchPlayStatus() async {
     if (playerController == null) {
       return;
     }
 
     if (playerController!.value.isPlaying) {
-      await playerController!.pause();
-      listeners.runOnPause();
-    } else {
-      await playerController!.play();
-      listeners.runOnPlay();
+      if(listeners.runOnPause()){
+        await pause();
+      }
+    } else if (listeners.runOnPlay()) {
+      await play();
     }
-
-    _state.setPlayStatus(playerController!.value.isPlaying);
   }
 
   switchRibbon() {
@@ -223,9 +226,9 @@ class PlayerController {
 
       playerController!.seekTo(duration);
 
-      if (!playerController!.value.isPlaying) {
-        playerController!.play();
-      }
+      // if (playerController!.value.isPlaying) {
+      //   playerController!.play();
+      // }
     }
   }
 
@@ -241,14 +244,15 @@ class PlayerController {
       return;
     }
 
-    var speedDuration = Duration(microseconds: (current - target).inMicroseconds.abs() ~/ (speed - targetSpeed));
+    var speedDuration =
+        Duration(microseconds: (current - target).inMicroseconds.abs() ~/ (speed - targetSpeed));
     if (current + speedDuration > playerController!.value.duration) {
       seekTo(target);
     }
 
     playerController!.setPlaybackSpeed(speed);
     speedTimer?.cancel();
-    speedTimer = Timer(Duration(microseconds: (current - target).inMicroseconds.abs() ~/ (speed - targetSpeed)), () {
+    speedTimer = Timer(speedDuration, () {
       playerController?.setPlaybackSpeed(targetSpeed);
     });
   }
@@ -365,6 +369,28 @@ class PlayerController {
     _state.setVideoMenu(VideoMenu.subtitle);
   }
 
+  Future<void> play() async {
+    if (playerController != null) {
+      Wakelock.enable();
+
+      await playerController!.play();
+      _state.setPlayStatus(true);
+    }
+  }
+
+  Future<void> pause() async {
+    if (playerController != null) {
+      Wakelock.disable();
+
+      await playerController!.pause();
+      _state.setPlayStatus(false);
+    }
+  }
+
+  sendNotification(Text content, Duration duration) {
+    print(content.data);
+  }
+
   Future<void> loadOriginVideo(AliFile file) async {
     if (file.playInfo == null || file.videoMetadata == null) {
       return;
@@ -378,8 +404,8 @@ class PlayerController {
     var response = await AliDriver.downloadUrl(file.fileID);
     var meta = file.videoMetadata!;
 
-    file.playInfo!.sources
-        .insert(0, Source(url: response.body['cdn_url'], resolution: "${meta.width}x${meta.height} 原画"));
+    file.playInfo!.sources.insert(
+        0, Source(url: response.body['cdn_url'], resolution: "${meta.width}x${meta.height} 原画"));
   }
 
   Future dispose() async {

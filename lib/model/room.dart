@@ -24,7 +24,10 @@ class Room {
     this.playList,
   });
 
-  factory Room.fromJson(json) => Room(
+  factory Room.fromJson(json) {
+    List<AliFile> playList = [for (var p in (json['playlist'] ?? [])) AliFile.formJson(p)];
+
+    return Room(
         id: json['id'],
         episode: json['episode'],
         speed: (json['speed'] as int).toDouble(),
@@ -32,9 +35,10 @@ class Room {
         master: User.fromJson(json['master']),
         duration: Duration(milliseconds: json['duration']),
         users: [for (var u in json['users']) User.fromJson(u)],
-        currentPlay: json['currentPlay'] == null ? null : AliFile.formJson(json['id']),
-        playList: [for (var p in (json['playlist'] ?? [])) AliFile.formJson(p)],
+        currentPlay: json['currentPlay'] == null ? null : playList[json['episode']],
+        playList: playList,
       );
+  }
 
   // on join room
   Map<String, dynamic> toJson() => {
