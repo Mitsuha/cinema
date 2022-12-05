@@ -54,8 +54,10 @@ class FileSelector extends StatelessWidget {
               ),
               Expanded(
                 child: ListView.builder(
+                  addAutomaticKeepAlives: true,
                   padding: EdgeInsets.zero,
                   itemCount: state.files.length,
+                  physics: const BouncingScrollPhysics(),
                   itemBuilder: (BuildContext context, int i) {
                     var file = state.files[i];
 
@@ -90,7 +92,8 @@ class FileSelector extends StatelessWidget {
       const Positioned.fill(
         child: Center(
           child: DecoratedBox(
-            decoration: BoxDecoration(color: Color(0x4F9E9E9E), borderRadius: BorderRadius.all(Radius.circular(50))),
+            decoration: BoxDecoration(
+                color: Color(0x4F9E9E9E), borderRadius: BorderRadius.all(Radius.circular(50))),
             child: Icon(Icons.play_arrow),
           ),
         ),

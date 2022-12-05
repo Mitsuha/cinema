@@ -6,8 +6,7 @@ import 'components/simple_bottom_bar.dart';
 import 'controller.dart';
 
 class PlayerRibbon extends StatelessWidget {
-  // ignore: prefer_const_constructors_in_immutables
-  PlayerRibbon({Key? key}) : super(key: key);
+  const PlayerRibbon({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +16,11 @@ class PlayerRibbon extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        /// title bar
         Visibility(
           visible: state.ribbonVisibility ||
-              (state.orientation == Orientation.portrait && !(controller.playerController?.value.isPlaying ?? false)),
+              (state.orientation == Orientation.portrait &&
+                  !(controller.playerController?.value.isPlaying ?? false)),
           child: AnimatedOpacity(
             opacity: state.ribbonShow ||
                     (state.orientation == Orientation.portrait &&
@@ -40,30 +41,32 @@ class PlayerRibbon extends StatelessWidget {
             ),
           ),
         ),
+
+        /// pause or play button
         Visibility(
           visible: state.orientation == Orientation.landscape && state.ribbonShow,
-          child: Row(
-            children: [
-              Expanded(
-                child: Center(
-                  child: Transform.translate(
-                    offset: const Offset(34, 0),
-                    child: IconButton(
+          child: Center(
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                  boxShadow: [BoxShadow(blurRadius: 35, color: Colors.black87)]),
+              child: ValueListenableBuilder<bool>(
+                  valueListenable: state.playing,
+                  builder: (context, isPlaying, _) {
+                    return IconButton(
                       iconSize: 60,
                       icon: Icon(
-                        state.playing ? Icons.pause : Icons.play_arrow_rounded,
+                        isPlaying ? Icons.pause : Icons.play_arrow_rounded,
                         color: Colors.white,
                         shadows: const [Shadow(color: Colors.white, blurRadius: 50)],
                       ),
-                      onPressed: controller.switchPlayStatus,
-                    ),
-                  ),
-                ),
-              ),
-              IconButton(onPressed: (){}, icon: const Icon(Icons.keyboard_voice, color: Colors.white))
-            ],
+                      onPressed: controller.canControl ? controller.switchPlayStatus : null,
+                    );
+                  }),
+            ),
           ),
         ),
+
+        /// actions bar
         Visibility(
           visible: state.ribbonVisibility,
           maintainAnimation: true,
@@ -72,7 +75,9 @@ class PlayerRibbon extends StatelessWidget {
             opacity: state.ribbonShow ? 1 : 0,
             duration: const Duration(milliseconds: 300),
             onEnd: controller.updateRibbonVisibility,
-            child: state.orientation == Orientation.portrait ? const SimpleBottomBar() : const FullBottomBar(),
+            child: state.orientation == Orientation.portrait
+                ? const SimpleBottomBar()
+                : const FullBottomBar(),
           ),
         ),
       ],

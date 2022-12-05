@@ -14,34 +14,47 @@ class SimpleBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var controller = context.read<PlayerController>();
-    var state = context.watch<PlayerState>();
+    var state = context.read<PlayerState>();
 
     return VideoLinearGradient(
       child: Row(
         children: [
-          SizedBox(
-            width: iconButtonSize,
-            child: IconButton(
-              icon: Icon(
-                state.playing ? Icons.pause : Icons.play_arrow_rounded,
-                color: Colors.white,
-              ),
-              onPressed: controller.switchPlayStatus,
-            ),
-          ),
-          Consumer<VideoPlayState>(builder: (context, state, _) {
-            return Expanded(
-              child: Row(children: [
-                Expanded(
-                  child: controller.canControl ? VideoProgressBar() : const SizedBox(),
-                ),
-                Text(
-                  "${controller.playerController?.value.duration.toVideoString() ?? '00:00'}/${state.playingDuration.toVideoString()}",
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ]),
-            );
-          }),
+          /// show playing status
+          ValueListenableBuilder<bool>(
+              valueListenable: state.playing,
+              builder: (context, isPlaying, _) {
+                return SizedBox(
+                  width: iconButtonSize,
+                  child: IconButton(
+                    icon: Icon(
+                      isPlaying ? Icons.pause : Icons.play_arrow_rounded,
+                      color: Colors.white,
+                    ),
+                    onPressed: controller.canControl ? controller.switchPlayStatus : null,
+                  ),
+                );
+              }),
+
+          /// show Duration
+          ValueListenableBuilder<Duration>(
+              valueListenable: controller.state.playingDuration,
+              builder: (context, duration, _) {
+                return Expanded(
+                  child: Row(children: [
+                    Expanded(
+                        child: !controller.canControl
+                            ? const SizedBox()
+                            : VideoProgressBar(
+                                max: controller.playerController?.value.duration,
+                                current: duration,
+                              )),
+                    Text(
+                      "${controller.duration.humanRead()}/${duration.humanRead()}",
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ]),
+                );
+              }),
           SizedBox(
             width: iconButtonSize,
             child: IconButton(

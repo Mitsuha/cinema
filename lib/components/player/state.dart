@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:hourglass/ali_driver/models/file.dart';
 import 'package:flutter/material.dart';
 
-enum VideoMenu{
+enum VideoMenu {
   none,
   playList,
   speed,
@@ -10,29 +10,12 @@ enum VideoMenu{
   subtitle,
 }
 
-class VideoPlayState with ChangeNotifier{
-  int playingSeconds = 0;
-  Duration playingDuration = const Duration();
-
-  setPlayingSeconds(int seconds){
-    playingSeconds = seconds;
-    notifyListeners();
-  }
-
-  setPlayingDuration(Duration duration){
-    playingDuration = duration;
-    notifyListeners();
-  }
-
-}
-
-class PlayerState with ChangeNotifier{
+class PlayerState with ChangeNotifier {
   var playlist = <AliFile>[];
-  var playing = false;
+  var playing = ValueNotifier<bool>(false);
   var ribbonShow = true;
   var ribbonVisibility = true;
   var videoControllerInitialing = true;
-  var videoCaching = false;
   var fastForwardTo = Duration.zero;
   var volumeUpdating = false;
   var volumeValue = .0;
@@ -40,86 +23,72 @@ class PlayerState with ChangeNotifier{
   var brightValue = .0;
   var orientation = Orientation.portrait;
   var deviceOrientation = DeviceOrientation.portraitUp;
-  var videoMenu = VideoMenu.none;
+  var videoMenu = ValueNotifier<VideoMenu>(VideoMenu.none);
+  var playingDuration = ValueNotifier<Duration>(Duration.zero);
 
   AliFile? currentEpisode;
 
-  setVideoControllerInitialing(bool initialing){
-    if(initialing == videoControllerInitialing){
+  setVideoControllerInitialing(bool initialing) {
+    if (initialing == videoControllerInitialing) {
       return;
     }
     videoControllerInitialing = initialing;
     notifyListeners();
   }
 
-  setCurrentEpisode(AliFile file){
+  setCurrentEpisode(AliFile file) {
     currentEpisode = file;
     notifyListeners();
   }
 
-  setPlayStatus(bool status){
-    if(playing == status){
-      return;
-    }
-    playing = status;
-    notifyListeners();
-  }
-
-
-  setFastForwardTo(Duration forward){
+  setFastForwardTo(Duration forward) {
     fastForwardTo = forward;
     notifyListeners();
   }
 
-  setRibbonShow(bool show){
+  setRibbonShow(bool show) {
     ribbonShow = show;
     notifyListeners();
   }
 
-  setRibbonVisibility(bool visible){
-    if(ribbonVisibility == visible){
+  setRibbonVisibility(bool visible) {
+    if (ribbonVisibility == visible) {
       return;
     }
     ribbonVisibility = visible;
     notifyListeners();
   }
 
-  setVolumeUpdating(bool update){
+  setVolumeUpdating(bool update) {
     volumeUpdating = update;
     notifyListeners();
   }
 
-  setVolumeValue(double v){
+  setVolumeValue(double v) {
     volumeValue = v;
     notifyListeners();
   }
 
-  setBrightUpdating(bool update){
+  setBrightUpdating(bool update) {
     brightUpdating = update;
     notifyListeners();
   }
 
-  setBrightValue(double v){
+  setBrightValue(double v) {
     brightValue = v;
     notifyListeners();
   }
 
-  setOrientation(Orientation o){
-    if(orientation == o){
+  setOrientation(Orientation o) {
+    if (orientation == o) {
       return;
     }
     orientation = o;
     notifyListeners();
   }
 
-  setVideoMenu(VideoMenu menu){
-    videoMenu = menu;
-    notifyListeners();
-  }
-
-  setState(void Function() callback){
+  setState(void Function() callback) {
     callback();
     notifyListeners();
   }
-
 }

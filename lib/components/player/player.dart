@@ -19,10 +19,8 @@ class Player extends StatefulWidget {
 
 class _PlayerState extends State<Player> {
   @override
-  void initState() {
-    super.initState();
-
-    widget.controller.initState();
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -30,8 +28,7 @@ class _PlayerState extends State<Player> {
     return MultiProvider(
       providers: [
         Provider<PlayerController>(create: (_) => widget.controller),
-        ChangeNotifierProvider<PlayerState>(create: (_) => widget.controller.getState()),
-        ChangeNotifierProvider<VideoPlayState>(create: (_) => widget.controller.videoPlayState),
+        ChangeNotifierProvider<PlayerState>(create: (_) => widget.controller.state),
       ],
       builder: (BuildContext context, _) {
         return DefaultTextStyle(
@@ -45,13 +42,19 @@ class _PlayerState extends State<Player> {
                 fit: StackFit.loose,
                 children: [
                   VideoContainer(),
+
+                  /// 状态指示层
                   const Positioned.fill(
                     child: Center(child: StatusIndication()),
                   ),
+
+                  /// 手势识别层
                   const Positioned.fill(
                     child: PlayerDetector(),
                   ),
-                  Positioned.fill(
+
+                  /// 操作层
+                  const Positioned.fill(
                     child: PlayerRibbon(),
                   ),
                   if (orientation == Orientation.landscape) const PlayerMenu()

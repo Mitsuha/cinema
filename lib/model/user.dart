@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:hourglass/runtime.dart';
 
 class User with ChangeNotifier {
-  String id;
+  int id;
+  String aliID;
   String name;
   String avatar;
   String phone;
   int totalSize;
   int usedSize;
-  bool guest;
-
-  static User? _auth;
 
   User({
     required this.id,
+    required this.aliID,
     required this.name,
     required this.avatar,
     this.phone = '',
     this.totalSize = 0,
     this.usedSize = 0,
-    this.guest = false,
   });
 
   merge(User user) {
@@ -28,20 +27,21 @@ class User with ChangeNotifier {
     phone = user.phone;
     totalSize = user.totalSize;
     usedSize = user.usedSize;
-    guest = user.guest;
   }
 
   toJson() => {
         "id": id,
+        "ali_id": aliID,
+        "phone": phone,
         "name": name,
         "avatar": avatar,
       };
 
-  static User get auth => _auth!;
-  static set auth (User u) => _auth = u;
+  static User get auth => Runtime.instance.user!;
 
   factory User.fromJson(json) => User(
-        id: json['user_id'] ?? json['id'],
+        id: json['id'] ?? 0,
+        aliID: json['user_id'] ?? json['ali_id'],
         name: json['nick_name'] ?? json['name'],
         avatar: json['avatar'] != ''
             ? json['avatar']
@@ -51,19 +51,9 @@ class User with ChangeNotifier {
         usedSize: json['used_size'] ?? 0,
       );
 
-  factory User.guest() => User(
-        id: '',
-        name: 'Guest',
-        avatar: 'https://gw.alicdn.com/imgextra/i4/O1CN01Zqmj9x1yqaZster4k_!!6000000006630-2-tps-128-128.png',
-        phone: '',
-        totalSize: 1,
-        usedSize: 0,
-        guest: true,
-      );
-
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is User && runtimeType == other.runtimeType && id == other.id;
+      identical(this, other) || other is User && runtimeType == other.runtimeType && aliID == other.aliID;
 
   @override
   int get hashCode => id.hashCode;

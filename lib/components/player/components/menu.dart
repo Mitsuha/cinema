@@ -13,34 +13,38 @@ class PlayerMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     var widgetSize = MediaQuery.of(context).size;
     var width = widgetSize.width / 2.5;
-    PlayerState state = context.watch<PlayerState>();
+    PlayerState state = context.read<PlayerState>();
 
-    Widget child;
+    return ValueListenableBuilder<VideoMenu>(
+      valueListenable: state.videoMenu,
+      builder: (BuildContext context, menu, _){
+        Widget child;
 
-    if (state.videoMenu == VideoMenu.none) {
-      child = const SizedBox();
-    } else if (state.videoMenu == VideoMenu.playList) {
-      child = const VideoPlayList();
-    } else if (state.videoMenu == VideoMenu.resolution){
-      child = const SelectResolution();
-    }else if (state.videoMenu == VideoMenu.speed){
-      child = const SelectSpeed();
-    }else {
-      child = const SizedBox();
-    }
+        switch(menu){
+          case VideoMenu.playList:
+            child = const VideoPlayList(); break;
+          case VideoMenu.resolution:
+            child = const SelectResolution(); break;
+          case VideoMenu.speed:
+            child = const SelectSpeed(); break;
+          default:
+            child = const SizedBox();
+        }
 
-    return AnimatedPositioned(
-      duration: Basic.animationDuration,
-      right: state.videoMenu != VideoMenu.none ? 0 : -width,
-      child: SizedBox(
-        width: width,
-        height: widgetSize.height,
-        child: Material(
-          color: const Color(0xC0000000),
-          textStyle: const TextStyle(fontSize: 15, color: Colors.white, overflow: TextOverflow.ellipsis),
-          child: child,
-        ),
-      ),
+        return AnimatedPositioned(
+          duration: Basic.animationDuration,
+          right: VideoMenu.none != menu ? 0 : -width,
+          child: SizedBox(
+            width: width,
+            height: widgetSize.height,
+            child: Material(
+              color: const Color(0xC0000000),
+              textStyle: const TextStyle(fontSize: 15, color: Colors.white, overflow: TextOverflow.ellipsis),
+              child: child,
+            ),
+          ),
+        );
+      },
     );
   }
 }

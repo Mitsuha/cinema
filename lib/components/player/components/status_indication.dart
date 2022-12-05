@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hourglass/components/player/controller.dart';
 import 'package:hourglass/components/player/state.dart';
 import 'package:provider/provider.dart';
 import 'package:hourglass/helpers.dart';
@@ -8,10 +9,13 @@ class StatusIndication extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var controller = context.read<PlayerController>();
     var state = context.watch<PlayerState>();
 
     if (state.fastForwardTo != Duration.zero) {
-      return notifierWarp(child: Text(state.fastForwardTo.toVideoString()));
+      return notifierWarp(
+        child: Text("${state.fastForwardTo.humanRead()}/${controller.duration.humanRead()}"),
+      );
     }
 
     if (state.brightUpdating || state.volumeUpdating) {
@@ -47,7 +51,7 @@ class StatusIndication extends StatelessWidget {
           borderRadius: BorderRadius.all(Radius.circular(5)),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           child: child,
         ),
       );

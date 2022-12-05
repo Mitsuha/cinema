@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ffi';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,38 +17,37 @@ import 'package:wakelock/wakelock.dart';
 
 class PlayerController {
   final PlayerState _state = PlayerState();
-  final VideoPlayState videoPlayState = VideoPlayState();
   final VolumeController volumeController = VolumeController()..showSystemUI = false;
   final ScreenBrightness screenBrightness = ScreenBrightness();
   final bool canControl;
-  late final PlayerListeners listeners;
+  late final PlayerEvent event;
 
   StreamSubscription? sensorsStreamSubscription;
+  late StreamSubscription brightnessListener;
   VideoPlayerController? playerController;
   double basicY = 0;
   double rotateY = 0;
-  Timer? speedTimer;
+  SpeedTimer? speedTimer;
 
-  PlayerController({required this.canControl, PlayerListeners? listeners}) {
-    this.listeners = listeners ?? PlayerListeners();
-  }
+  PlayerController({required this.canControl, PlayerEvent? listeners}) {
+    event = listeners ?? EmptyPlayerListener();
 
-  initState() {
     volumeController.listener((v) {
       if (!_state.volumeUpdating) {
         return _state.setVolumeValue(v);
       }
     });
-    screenBrightness.onCurrentBrightnessChanged.listen((v) {
+
+    brightnessListener = screenBrightness.onCurrentBrightnessChanged.listen((v) {
       if (!_state.volumeUpdating) {
         _state.setBrightValue(v);
       }
     });
+
+    event.inited();
   }
 
-  PlayerState getState() {
-    return _state;
-  }
+  PlayerState get state => _state;
 
   List<AliFile> get playList => _state.playlist;
 
@@ -57,7 +55,9 @@ class PlayerController {
 
   Duration get position => playerController?.value.position ?? Duration.zero;
 
-  bool get isPlaying => _state.playing;
+  Duration get duration => playerController?.value.duration ?? Duration.zero;
+
+  bool get isPlaying => _state.playing.value;
 
   registerSensorsListener() {
     const sen = 3.6;
@@ -95,13 +95,10 @@ class PlayerController {
   Future<void> selectEpisode(int i) async {
     AliFile episode = _state.playlist[i];
 
-    if (!listeners.runOnSwitchEpisode(episode)) {
+    if (!await event.onSwitchEpisode(i, episode)) {
       return;
     }
 
-    if (!episode.playInfoLoaded) {
-      await episode.loadPlayInfo();
-    }
     _state.setCurrentEpisode(episode);
 
     await _loadNewVideo(episode.playInfo!.useTheBast());
@@ -143,7 +140,8 @@ class PlayerController {
     switchPlayStatus();
   }
 
-  _loadNewVideo(Source source) async {
+  Future<void> _loadNewVideo(Source source) async {
+    double speed = playerController?.value.playbackSpeed ?? 1;
     playerController?.dispose();
     playerController = null;
     _state.setVideoControllerInitialing(true);
@@ -160,9 +158,11 @@ class PlayerController {
       _state.setVideoControllerInitialing(false);
       return;
     }
+    playerController!.setPlaybackSpeed(speed);
 
     playerController!.addListener(() {
-      videoPlayState.setPlayingDuration(playerController!.value.position);
+      // todo 自动下一集
+      state.playingDuration.value = playerController!.value.position;
     });
 
     await playerController!.initialize();
@@ -170,39 +170,35 @@ class PlayerController {
     _state.setVideoControllerInitialing(false);
   }
 
-  setPlayList(List<AliFile> playlist, {bool autoplay = false}) {
-    _state.playlist = playlist;
-
-    if (autoplay) {
-      selectEpisode(0);
+  setPlayList(List<AliFile> playlist) {
+    if (event.onUpdatePlaylist(playList)) {
+      _state.playlist = playlist;
     }
   }
 
   setPlaySpeed(double speed) {
-    if (listeners.runOnChangeSpeed(speed)) {
+    if (event.onChangeSpeed(speed)) {
       playerController?.setPlaybackSpeed(speed);
-      _state.setVideoMenu(VideoMenu.none);
+      _state.videoMenu.value = VideoMenu.none;
     }
   }
 
   /// 用户点击播放按钮触发的事件
   switchPlayStatus() async {
-    if (playerController == null) {
+    if (playerController == null || !playerController!.value.isInitialized) {
       return;
     }
 
-    if (playerController!.value.isPlaying) {
-      if(listeners.runOnPause()){
-        await pause();
-      }
-    } else if (listeners.runOnPlay()) {
-      await play();
+    if (!event.onChangeStatus(!playerController!.value.isPlaying)) {
+      return;
     }
+
+    playerController!.value.isPlaying ? await pause() : await play();
   }
 
   switchRibbon() {
-    if (_state.videoMenu != VideoMenu.none) {
-      _state.setVideoMenu(VideoMenu.none);
+    if (_state.videoMenu.value != VideoMenu.none) {
+      _state.videoMenu.value = VideoMenu.none;
       return;
     }
 
@@ -221,17 +217,14 @@ class PlayerController {
     if (playerController == null) {
       return;
     }
-    if (listeners.runOnSeek(duration)) {
-      speedTimer?.cancel();
+    if (event.onSeek(duration)) {
+      speedTimer?.activeNow();
 
       playerController!.seekTo(duration);
-
-      // if (playerController!.value.isPlaying) {
-      //   playerController!.play();
-      // }
     }
   }
 
+  /// speed 自身的速度，targetSpeed 要追赶的目标速度
   speedTo(double speed, double targetSpeed, Duration target) {
     if (playerController == null) {
       return;
@@ -252,7 +245,7 @@ class PlayerController {
 
     playerController!.setPlaybackSpeed(speed);
     speedTimer?.cancel();
-    speedTimer = Timer(speedDuration, () {
+    speedTimer = SpeedTimer(speedDuration, () {
       playerController?.setPlaybackSpeed(targetSpeed);
     });
   }
@@ -345,28 +338,12 @@ class PlayerController {
     return;
   }
 
-  showPlayList() {
-    _state.ribbonShow = false;
-    _state.ribbonVisibility = false;
-    _state.setVideoMenu(VideoMenu.playList);
-  }
-
-  showResolution() {
-    _state.ribbonShow = false;
-    _state.ribbonVisibility = false;
-    _state.setVideoMenu(VideoMenu.resolution);
-  }
-
-  showSpeed() {
-    _state.ribbonShow = false;
-    _state.ribbonVisibility = false;
-    _state.setVideoMenu(VideoMenu.speed);
-  }
-
-  showSubtitle() {
-    _state.ribbonShow = false;
-    _state.ribbonVisibility = false;
-    _state.setVideoMenu(VideoMenu.subtitle);
+  showMenu(VideoMenu menu) {
+    _state.setState(() {
+      _state.ribbonShow = false;
+      _state.ribbonVisibility = false;
+    });
+    _state.videoMenu.value = menu;
   }
 
   Future<void> play() async {
@@ -374,7 +351,7 @@ class PlayerController {
       Wakelock.enable();
 
       await playerController!.play();
-      _state.setPlayStatus(true);
+      _state.playing.value = true;
     }
   }
 
@@ -383,12 +360,12 @@ class PlayerController {
       Wakelock.disable();
 
       await playerController!.pause();
-      _state.setPlayStatus(false);
+      _state.playing.value = false;
     }
   }
 
   sendNotification(Text content, Duration duration) {
-    print(content.data);
+    Fluttertoast.showToast(msg: content.data!);
   }
 
   Future<void> loadOriginVideo(AliFile file) async {
@@ -409,8 +386,37 @@ class PlayerController {
   }
 
   Future dispose() async {
+    event.dispose();
     await playerController?.dispose();
     volumeController.removeListener();
+    brightnessListener.cancel();
     sensorsStreamSubscription?.cancel();
   }
+}
+
+class SpeedTimer implements Timer {
+  late Timer _timer;
+  final void Function() _action;
+
+  SpeedTimer(Duration duration, this._action) {
+    _timer = Timer(duration, _action);
+  }
+
+  @override
+  void cancel() {
+    _timer.cancel();
+  }
+
+  void activeNow() {
+    _timer.cancel();
+    _action();
+  }
+
+  @override
+  // TODO: implement isActive
+  bool get isActive => _timer.isActive;
+
+  @override
+  // TODO: implement tick
+  int get tick => _timer.tick;
 }

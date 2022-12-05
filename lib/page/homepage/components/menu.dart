@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hourglass/page/homepage/components/card_item.dart';
@@ -19,7 +21,7 @@ class HomepageMenu extends StatelessWidget {
         Card(
           child: InkWell(
             borderRadius: BorderRadius.circular(3.9),
-            onTap: controller.showFileSelector,
+            onTap: () => controller.fileSelector.show(),
             child: CardItem(
               icon: Image.asset('assets/images/watch.png', width: iconSize),
               title: '创建房间',
@@ -77,18 +79,22 @@ class HomepageMenu extends StatelessWidget {
         TextButton(
           child: const Text('加入'),
           onPressed: () async {
-            try {
-              controller.getRoomInfo(int.parse(roomID)).then((room) {
-                if (room == null) {
-                  Fluttertoast.showToast(msg: '要加入的房间不存在');
-                } else {
-                  controller.joinRoom(context, room);
+            var navigator = Navigator.of(context);
 
-                  Navigator.of(context).pop();
-                }
-              });
-            } catch (_) {
-              Fluttertoast.showToast(msg: '要加入的房间不存在');
+            try {
+              var room = await controller.getRoomInfo(int.parse(roomID));
+              if (room == null) {
+                Fluttertoast.showToast(msg: '要加入的房间不存在');
+              } else {
+                navigator.pop();
+
+                controller.joinRoom(navigator, room);
+              }
+            } on FormatException catch (err) {
+              Fluttertoast.showToast(msg: '房间号不正确');
+            } catch (err, stack) {
+              log(err.toString(), stackTrace: stack);
+              Fluttertoast.showToast(msg: '与服务器断开连接');
             }
           },
         ),

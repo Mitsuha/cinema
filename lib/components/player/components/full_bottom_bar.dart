@@ -15,32 +15,43 @@ class FullBottomBar extends StatelessWidget {
     return VideoLinearGradient(
       child: Column(
         children: [
-          Consumer<VideoPlayState>(builder: (context, state, _) {
-            return Row(children: [
-              Text(state.playingDuration.toVideoString(), style: const TextStyle(fontSize: 12)),
-              Expanded(child: controller.canControl ? VideoProgressBar() : const SizedBox()),
-              Text(
-                controller.playerController?.value.duration.toVideoString() ?? '00:00',
-                style: const TextStyle(fontSize: 12),
-              ),
-              const SizedBox(width: 15),
-            ]);
-          }),
+          /// 进度条
+          ValueListenableBuilder<Duration>(
+              valueListenable: controller.state.playingDuration,
+              builder: (context, duration, _) {
+                return Row(children: [
+                  Text(
+                    controller.playerController?.value.duration.humanRead() ?? '00:00',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  Expanded(
+                      child: !controller.canControl
+                          ? const SizedBox()
+                          : VideoProgressBar(
+                              max: controller.playerController?.value.duration,
+                              current: duration,
+                            )),
+                  Text(duration.humanRead(), style: const TextStyle(fontSize: 12)),
+                  const SizedBox(width: 15),
+                ]);
+              }),
+
+          /// 操作栏
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               TextButton.icon(
-                onPressed: controller.showPlayList,
+                onPressed: ()=> controller.showMenu(VideoMenu.playList),
                 icon: const Icon(Icons.playlist_play, color: Colors.white),
                 label: const Text('播放列表', style: TextStyle(color: Colors.white)),
               ),
               TextButton.icon(
-                onPressed: controller.showSpeed,
+                onPressed: ()=> controller.showMenu(VideoMenu.speed),
                 icon: const Icon(Icons.speed, color: Colors.white),
                 label: const Text('倍速播放', style: TextStyle(color: Colors.white)),
               ),
               TextButton.icon(
-                onPressed: controller.showResolution,
+                onPressed: ()=> controller.showMenu(VideoMenu.resolution),
                 icon: const Icon(Icons.hd_outlined, color: Colors.white),
                 label: const Text('清晰度', style: TextStyle(color: Colors.white)),
               ),

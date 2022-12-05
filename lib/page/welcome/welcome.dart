@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hourglass/page/welcome/floating.dart';
 import 'package:hourglass/page/welcome/signup.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 class Welcome extends StatefulWidget {
   const Welcome({Key? key}) : super(key: key);
@@ -14,7 +13,6 @@ class Welcome extends StatefulWidget {
 }
 
 class _AliDriveInitStackState extends State<Welcome> {
-  WebViewController? _controller;
   Timer? _timer;
 
   @override

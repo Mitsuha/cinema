@@ -1,20 +1,15 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:hourglass/ali_driver/persistence.dart';
 import 'package:hourglass/page/welcome_page.dart';
+import 'package:hourglass/runtime.dart';
 import 'package:provider/provider.dart';
 
 void main() {
   /// todo: https://github.com/rrousselGit/provider/issues/356
   Provider.debugCheckInvalidValueType = null;
+  // WidgetsFlutterBinding.ensureInitialized();
 
-  if (Platform.isAndroid) {
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent
-    ));
-  }
+  Runtime.boot();
 
   runApp(const MyApp());
 }

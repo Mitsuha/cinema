@@ -83,10 +83,16 @@ class AliFile {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is AliFile && runtimeType == other.runtimeType && fileID == other.fileID;
+      identical(this, other) ||
+      other is AliFile && runtimeType == other.runtimeType && fileID == other.fileID;
 
   @override
   int get hashCode => fileID.hashCode;
+
+  mergePlayInfo(AliFile other) {
+    playInfo = other.playInfo;
+    videoMetadata = other.videoMetadata;
+  }
 }
 
 class VideoMetadata {

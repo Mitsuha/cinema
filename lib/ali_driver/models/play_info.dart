@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class PlayInfo {
   final double duration;
   final int width;
@@ -100,6 +102,12 @@ class Source {
       'url': url,
       'resolution': resolution,
     };
+  }
+
+  @override
+  String toString() {
+    // TODO: implement toString
+    return jsonEncode(toJson());
   }
 }
 

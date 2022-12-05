@@ -87,7 +87,6 @@ class Signup extends StatelessWidget {
                                   name: 'FlutterLogin',
                                   onMessageReceived: (JavascriptMessage message) {
                                     var msg = jsonDecode(message.message);
-                                    print(msg);
 
                                     AliPersistence.instance.accessToken = msg['access_token'];
                                     AliPersistence.instance.refreshToken = msg['refresh_token'];

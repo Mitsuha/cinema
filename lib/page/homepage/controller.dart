@@ -3,27 +3,37 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hourglass/ali_driver/api.dart';
 import 'package:hourglass/ali_driver/models/file.dart';
+import 'package:hourglass/ali_driver/models/play_info.dart';
 import 'package:hourglass/model/room.dart';
 import 'package:hourglass/model/user.dart';
 import 'package:hourglass/page/homepage/state.dart';
 import 'package:hourglass/page/watch/view.dart';
-import 'package:hourglass/websocket/ws.dart';
+import 'package:hourglass/runtime.dart';
+import 'package:hourglass/websocket/distributor.dart';
 
 class HomepageController {
   final HomepageState state = HomepageState();
+  final FileSelectorState fileSelector = FileSelectorState();
 
   init() {
-    getUserInfo();
-    loadFile('root');
+    getUserInfo().then((user) {
+      state.setUser(user);
 
-    state.addListener(() {
-      if (state.userInitial && state.user.id != Ws.instance.user?.id) {
-        Ws.instance.register(state.user);
-      }
+      Distributor.instance.request('register', user).then((Map<String, dynamic> message) {
+        if (message['success'] == true) {
+          user.id = User.fromJson(message['payload']).id;
+
+          Runtime.instance.user = user;
+        } else {
+          Fluttertoast.showToast(msg: '登录失败，请清除软件数据重试');
+        }
+      });
+
+      loadFile('root');
     });
   }
 
-  getUserInfo() async {
+  Future<User> getUserInfo() async {
     var profile = AliDriver.userProfile();
 
     var driverInfo = AliDriver.userDriverInfo();
@@ -32,22 +42,13 @@ class HomepageController {
 
     result[0].body.addAll(result[1].body['personal_space_info']);
 
-    state.setUser(User.fromJson(result[0].body));
-    User.auth = state.user;
+    return User.fromJson(result[0].body);
   }
 
   loadFile(String folder) {
     AliDriver.fileList(parentFileID: folder).then((value) {
       state.setFile(value);
     });
-  }
-
-  hiddenFileSelector() {
-    state.setFileSelectorShow(false);
-  }
-
-  showFileSelector() {
-    state.setFileSelectorShow(true);
   }
 
   openFile(BuildContext context, AliFile file) {
@@ -79,95 +80,63 @@ class HomepageController {
     goToPlay(context, videos);
   }
 
-  goToPlay(BuildContext context, List<AliFile> videos) {
-    if (Ws.connecting) {
+  goToPlay(BuildContext context, List<AliFile> videos) async {
+    if (Distributor.instance.isConnecting) {
       Fluttertoast.showToast(msg: '与服务器断开连接，无法创建房间');
       return;
     }
 
-    Ws.instance.createRoom(videos).then((value) {
-      var room = Room.fromJson(value['payload']);
+    final navigator = Navigator.of(context);
 
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (BuildContext context) => WatchPage(room: room)));
-    });
-  }
+    var response = await Distributor.instance.request(
+      'createRoom',
+      [for (var p in videos) p.toJson()],
+    );
 
-  onAppResumed(BuildContext context) {
-    Clipboard.getData('text/plain').then((data) async {
-      String text = (data?.text ?? '');
-
-      if(text == ''){
-        return;
-      }
-
-      try {
-        RegExp regExp = RegExp(r'\#[0-9\s]*?\#');
-
-        text = (regExp.allMatches(text).first.group(0)!).replaceAll('#', '').trim();
-
-        var room = await getRoomInfo(int.parse(text));
-
-        if(room == null){
-          Fluttertoast.showToast(msg: '房间不存在');
-          return;
-        }
-
-        if(room.master == User.auth){
-          return;
-        }
-
-        Clipboard.setData(const ClipboardData(text: ''));
-
-        showDialog(
-          context: context,
-          builder: (BuildContext dialogCtx) {
-            return AlertDialog(
-              title: const Text('看起来你有封邀请函'),
-              content: Text('要加入 ${room.master.name} 的房间：${room.id} 吗？'),
-              actions: [
-                TextButton(
-                  child: const Text('取消', style: TextStyle(color: Colors.grey)),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                TextButton(
-                  child: const Text('加入'),
-                  onPressed: () {
-                    Navigator.of(dialogCtx).pop();
-
-                    joinRoom(context, room);
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      } catch (e) {
-        return;
-      }
-    });
+    navigator.push(MaterialPageRoute(
+      builder: (BuildContext context) => WatchPage(room: Room.fromJson(response['payload'])),
+    ));
   }
 
   Future<Room?> getRoomInfo(int roomID) async {
-    var response = await Ws.instance.request('roomInfo', {'id': roomID});
+    var response = await Distributor.instance.request('roomInfo', {'id': roomID});
 
     if (response['success'] == false) {
       return null;
     }
+
     return Room.fromJson(response['payload']);
   }
 
-  joinRoom(BuildContext context, Room room) {
-    Ws.instance.joinRoom(room).then((response) {
-      if (response['payload']['success'] == false) {
-        Fluttertoast.showToast(msg: response['payload']['message']);
-      } else {
-        room.addUser(User.auth);
+  joinRoom(NavigatorState navigator, Room room) async {
+    var response = await Distributor.instance.request('joinRoom', room.toJson());
 
-        Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) {
-          return WatchPage(room: room);
-        }));
-      }
-    });
+    if (response['payload']['success'] == false) {
+      Fluttertoast.showToast(msg: response['payload']['message']);
+    } else {
+      room.currentPlay.playInfo = PlayInfo.formJson(response['payload']);
+      room.addUser(User.auth);
+
+      navigator.push(MaterialPageRoute(builder: (BuildContext context) => WatchPage(room: room)));
+    }
+  }
+
+  Future<Room?> getRoomInfoFromClipboard() async {
+    ClipboardData? data = await Clipboard.getData('text/plain');
+    String text = (data?.text ?? '');
+
+    if (text == '') {
+      return null;
+    }
+
+    try {
+      RegExp regExp = RegExp(r'\#[0-9\s]*?\#');
+
+      text = (regExp.allMatches(text).first.group(0)!).replaceAll('#', '').trim();
+
+      return await getRoomInfo(int.parse(text));
+    } catch (_) {
+      return null;
+    }
   }
 }

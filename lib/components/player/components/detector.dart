@@ -9,23 +9,26 @@ class PlayerDetector extends StatelessWidget {
   Widget build(BuildContext context) {
     PlayerController controller = context.read<PlayerController>();
 
-    return GestureDetector(
-      onTap: controller.switchRibbon,
-      onDoubleTap: controller.switchPlayStatus,
-      onHorizontalDragUpdate: controller.canControl ? controller.addFastForwardTo : null,
-      onHorizontalDragEnd: controller.canControl ? controller.doFastForward: null,
-      onHorizontalDragCancel: controller.canControl ? controller.onDetectorDone: null,
-      onVerticalDragEnd: controller.addBrightOrVolumeDone,
-      onVerticalDragCancel: controller.onDetectorDone,
-      onVerticalDragUpdate: (DragUpdateDetails details) {
-        var half = MediaQuery.of(context).size.width / 2;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: GestureDetector(
+        onTap: controller.switchRibbon,
+        onDoubleTap: controller.canControl ? controller.switchPlayStatus : null,
+        onHorizontalDragUpdate: controller.canControl ? controller.addFastForwardTo : null,
+        onHorizontalDragEnd: controller.canControl ? controller.doFastForward : null,
+        onHorizontalDragCancel: controller.canControl ? controller.onDetectorDone : null,
+        onVerticalDragEnd: controller.addBrightOrVolumeDone,
+        onVerticalDragCancel: controller.onDetectorDone,
+        onVerticalDragUpdate: (DragUpdateDetails details) {
+          var half = MediaQuery.of(context).size.width / 2;
 
-        if (details.globalPosition.dx > half) {
-          controller.addVolume(details);
-        } else {
-          controller.addBright(details);
-        }
-      },
+          if (details.globalPosition.dx > half) {
+            controller.addVolume(details);
+          } else {
+            controller.addBright(details);
+          }
+        },
+      ),
     );
   }
 }

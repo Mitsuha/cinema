@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hourglass/components/player/player.dart';
 import 'package:hourglass/model/room.dart';
 import 'package:hourglass/page/watch/controller.dart';
@@ -16,61 +17,41 @@ class WatchPage extends StatefulWidget {
 }
 
 class _WatchPageState extends State<WatchPage> {
-  final WatchController controller = WatchController();
+  late final WatchController controller = WatchController(room: widget.room);
   final playerKey = GlobalKey();
 
   @override
   void initState() {
-    super.initState();
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarIconBrightness: Brightness.light,
+    ));
 
-    controller.init(widget.room);
+    super.initState();
   }
 
   @override
   void dispose() {
-    super.dispose();
-
     controller.dispose();
-  }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    print('change');
-
-    /// 只更新和 Keyboard 相关的参数
-    // if(MediaQuery.of(context).viewInsets.bottom != 0){
-    //   state.systemKeyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-    //   state.hasAnyKeyboardShow.value = true;
-    //   state.systemKeyboardOnShow.value = true;
-    //
-    //   // 食言了家人们，还得在这儿更新
-    //   state.activeSoftKeyboard.value = ActiveSoftKeyboard.none;
-    // }else{
-    //   // 系统键盘被收起
-    //   state.systemKeyboardOnShow.value = false;
-    //
-    //   if (state.activeSoftKeyboard.value == ActiveSoftKeyboard.none) {
-    //     state.hasAnyKeyboardShow.value = false;
-    //   }
-    // }
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    controller.context = context;
+    controller.subscriber.onDismissCall = () => Navigator.of(context).pop();
+
     final Player player = Player(
       key: playerKey,
       controller: controller.player,
     );
 
     return WillPopScope(
-      onWillPop: () => controller.onWillPop(context),
+      onWillPop: () => onWillPop(context),
       child: MultiProvider(
         providers: [
           Provider<WatchController>(create: (_) => controller),
           ChangeNotifierProvider<WatchState>(create: (_) => controller.state),
+          ChangeNotifierProvider<ChatState>(create: (_) => controller.chat),
         ],
         child: Material(
           color: Colors.white,
@@ -81,12 +62,50 @@ class _WatchPageState extends State<WatchPage> {
             return Column(
               children: [
                 player,
-                const Expanded(child: Interactive()),
+                const Expanded(child: ColoredBox(color: Color(0xff1d1b29), child: Interactive())),
               ],
             );
           }),
         ),
       ),
     );
+  }
+
+  Future<bool> onWillPop(BuildContext context) async {
+    if (controller.player.state.orientation == Orientation.landscape) {
+      await controller.player.cancelFullScreen();
+      return false;
+    } else {
+      bool back = false;
+      await showDialog(
+          context: context,
+          builder: (BuildContext dialogCtx) {
+            const style = TextStyle(color: Colors.white);
+            return AlertDialog(
+              backgroundColor: const Color(0xff151515),
+              title: const Text("Wait...", style: style),
+              content: const Text("确定要退出房间吗？", style: style),
+              actions: [
+                TextButton(
+                  child: const Text('取消', style: TextStyle(color: Colors.grey)),
+                  onPressed: () {
+                    Navigator.of(dialogCtx).pop();
+                    back = false;
+                  },
+                ),
+                TextButton(
+                  child: const Text('确定'),
+                  onPressed: () {
+                    controller.leaveRoom();
+                    Navigator.of(dialogCtx).pop();
+                    back = true;
+                  },
+                ),
+              ],
+            );
+          });
+
+      return back;
+    }
   }
 }

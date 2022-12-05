@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
+
 extension DurationToString on Duration{
-  String toVideoString(){
+  String humanRead(){
     var str = toString();
 
     str = str.split('.').first;
@@ -41,5 +43,26 @@ extension IntToString on int{
     }
     return toString();
   }
+}
 
+extension InsetText on TextEditingController {
+  void inset(String text) {
+    final selection = TextSelection.collapsed(
+      offset: text.length +
+          (!value.selection.isValid ? value.text.length : value.selection.extentOffset),
+    );
+
+    if ((value.selection.isCollapsed && value.selection.baseOffset == 0) ||
+        !value.selection.isValid) {
+      this.text = text + value.text;
+    } else if (value.selection.isCollapsed && value.selection.baseOffset == value.text.length) {
+      this.text = value.text + text;
+    } else {
+      var left = value.text.substring(0, value.selection.baseOffset);
+      var right = value.text.substring(value.selection.extentOffset);
+      this.text = left + text + right;
+    }
+
+    this.selection = selection;
+  }
 }

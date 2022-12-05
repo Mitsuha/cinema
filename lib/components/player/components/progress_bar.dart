@@ -1,27 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
+
 import '../controller.dart';
-import '../state.dart';
 
 class VideoProgressBar extends StatefulWidget {
+  final Duration? current;
+  final Duration? max;
 
-  // ignore: prefer_const_constructors_in_immutables
-  VideoProgressBar({Key? key}) : super(key: key);
+  const VideoProgressBar({this.max, this.current, Key? key}) : super(key: key);
 
   @override
   State<VideoProgressBar> createState() => _VideoProgressBarState();
 }
 
 class _VideoProgressBarState extends State<VideoProgressBar> {
+  late PlayerController _controller;
   var dragging = false;
   var current = 0.0;
 
   @override
-  Widget build(BuildContext context) {
-    var controller = context.read<PlayerController>();
+  void initState() {
+    super.initState();
 
+    SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+      _controller = context.read<PlayerController>();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     if (!dragging) {
-      current = controller.playerController?.value.position.inSeconds.toDouble() ?? 0;
+      current = widget.current?.inSeconds.toDouble() ?? 0;
     }
 
     return SliderTheme(
@@ -36,13 +46,13 @@ class _VideoProgressBarState extends State<VideoProgressBar> {
       ),
       child: Slider(
         min: 0,
-        max: controller.playerController?.value.duration.inSeconds.toDouble() ?? 100,
+        max: widget.max?.inSeconds.toDouble() ?? 1,
         value: current,
         onChanged: (newValue) => setState(() => current = newValue),
         onChangeStart: (_) => dragging = true,
         onChangeEnd: (newValue) {
           dragging = false;
-          controller.seekTo(Duration(seconds: newValue.toInt()));
+          _controller.seekTo(Duration(seconds: newValue.toInt()));
         },
       ),
     );

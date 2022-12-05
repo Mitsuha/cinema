@@ -45,6 +45,10 @@ dependencies:
   wakelock: ^0.6.2
   web_socket_channel: ^2.2.0
   uuid: 3.0.6
+  url_launcher: ^6.1.7
+#  permission_handler: ^10.2.0
+  package_info_plus: ^3.0.2
+
 
 dev_dependencies:
   flutter_test:

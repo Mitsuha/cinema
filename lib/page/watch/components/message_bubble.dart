@@ -12,11 +12,7 @@ class MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget avatar = SizedBox(
       width: 36,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: Color(0xffe4e6ee),
-          borderRadius: BorderRadius.all(Radius.circular(3)),
-        ),
+      child: ClipOval(
         child: Image.network(message.user.avatar, headers: Basic.originHeader),
       ),
     );
@@ -30,14 +26,16 @@ class MessageBubble extends StatelessWidget {
           ),
           const SizedBox(height: 3),
           DecoratedBox(
-            decoration: const BoxDecoration(
-              // color: toRight ? const Color(0xff95ec69): Colors.white,
-              color: Colors.white,
-              borderRadius: BorderRadius.all(Radius.circular(5)),
+            decoration: BoxDecoration(
+              color: toRight ? null : const Color(0xff3e3a53),
+              gradient: !toRight
+                  ? null
+                  : const LinearGradient(colors: [Color(0xff8275dd), Color(0xff9e6ed7)]),
+              borderRadius: const BorderRadius.all(Radius.circular(5)),
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6),
-              child: Text(message.content),
+              child: Text(message.content, style: const TextStyle(fontSize: 15, color: Colors.white)),
             ),
           ),
         ],

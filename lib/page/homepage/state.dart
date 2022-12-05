@@ -31,3 +31,17 @@ class HomepageState with ChangeNotifier {
     notifyListeners();
   }
 }
+
+class FileSelectorState with ChangeNotifier{
+  bool isShow = false;
+
+  show() {
+    isShow = true;
+    notifyListeners();
+  }
+
+  hidden(){
+    isShow = false;
+    notifyListeners();
+  }
+}
